@@ -27,7 +27,7 @@ namespace Angeloid.Controllers
             var animes = await context.Animes.ToListAsync();
 
             if (animes == null) { return NotFound(); }
-            
+
             return animes;
         }
 
@@ -36,8 +36,17 @@ namespace Angeloid.Controllers
         [Route("{getAnimeId:int}")]
         public async Task<ActionResult<List<Anime>>> GetAnime([FromServices] Context context, int getAnimeId)
         {
+            var anime = await context.Animes
+                                        .Where(a => a.AnimeId == getAnimeId)
+                                        .Include(t => t.Tags)
+                                        .Include(s => s.Season)
+                                        .Include(s => s.Studio)
+                                        .Include(c => c.Characters).ThenInclude(s => s.Seiyuu)
+                                        .FirstOrDefaultAsync(a => a.AnimeId == getAnimeId);
 
-            return null;
+            if (anime == null) { return NotFound(); }
+
+            return Ok(anime);
         }
 
         //Insert new anime
