@@ -19,13 +19,31 @@ namespace Angeloid.Controllers
     public class LogInOutController : ControllerBase
     {
         
-        //Login
-        [HttpGet]
+      //Login
+        [HttpPost]
         [Route("")]
-        public async Task<ActionResult<List<Anime>>> Login([FromServices] Context context, [FromBody] User user)
+        public async Task<ActionResult<User>> Login([FromServices] Context context, [FromBody] User user)
         {
-
-            return null;
+            // Allow Cors
+            Response.Headers.Add("Access-Control-Allow-Origin", "*");
+            // Check if model valid
+            if (!ModelState.IsValid) { return BadRequest(ModelState); }
+            
+            var _user = await context.Users
+                        .Where(u=> u.UserName==user.UserName && u.Password==user.Password)
+                        .Select(
+                            u=>new User{
+                                UserId=u.UserId,
+                                Avatar=u.Avatar,
+                                IsAdmin=u.IsAdmin
+                            }
+                        ).FirstOrDefaultAsync();
+            
+            if (_user != null)
+            {
+                return Ok(_user);
+            }
+            return NotFound();
         }
 
         //Logout
@@ -33,8 +51,7 @@ namespace Angeloid.Controllers
         [Route("{userid:int}")]
         public async Task<ActionResult<List<Anime>>> Logout([FromServices] Context context, int userId)
         {
-
-            return null;
+            return Ok("Logout success");
         }
     }
 }
