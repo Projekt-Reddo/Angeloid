@@ -31,6 +31,28 @@ namespace Angeloid.Controllers
             return users;
         }
 
+        [HttpGet]
+        [Route("{userId:int}")]
+        public async Task<ActionResult<Anime>> GetUser([FromServices] Context context, int userId)
+        {
+            var user = await context.Users
+                                .Where(u => u.UserId == userId)
+                                .Select(
+                                    u => new User {
+                                        UserId = u.UserId,
+                                        UserName = u.UserName,
+                                        Email = u.Email,
+                                        Gender = u.Gender,
+                                        Avatar = u.Avatar
+                                    }
+                                )
+                                .FirstOrDefaultAsync();
+
+            if (user != null) { return Ok(user); }
+            return NotFound();
+        }
+
+
         //Insert new user (register)
         [HttpPost]
         [Route("")]
@@ -54,14 +76,37 @@ namespace Angeloid.Controllers
 
         //Update user profile
         [HttpPut]
-        [Route("{userid:int}")]
+        [Route("profile/{userId:int}")]
         public async Task<ActionResult<Anime>> UpdateUser([FromServices] Context context, [FromBody] User user, int userId)
         {
+            if (!ModelState.IsValid) { return BadRequest(ModelState); }
 
-            // Allow cors
-            Response.Headers.Add("Access-Control-Allow-Origin","*");
-            
+            var existingUser = await context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+            if (existingUser != null) {
+                existingUser.Email = user.Email;
+                existingUser.Gender = user.Gender;
+                await context.SaveChangesAsync();
+                return Ok("Update done.");
+            }
+
             return Ok("Update done.");
+        }
+
+        //Update user avatar
+        [HttpPut]
+        [Route("avatar/{userId:int}")]
+        public async Task<ActionResult<Anime>> UpdateAvatar([FromServices] Context context, [FromBody] User user, int userId)
+        {
+            if (!ModelState.IsValid) { return BadRequest(ModelState); }
+
+            var existingUser = await context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+            if (existingUser != null) {
+                existingUser.Avatar = user.Avatar;
+                await context.SaveChangesAsync();
+                return Ok("Update done.");
+            }
+
+            return NotFound();
         }
     }
 }
