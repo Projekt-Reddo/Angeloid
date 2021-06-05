@@ -10,7 +10,6 @@ namespace Angeloid.Models
         public string TagDescription { get; set; }
 
         //Relationship to Anime by AnimeTag
-        [IgnoreDataMember]
         public virtual ICollection<Anime> Animes { get; set; }
         [IgnoreDataMember]
         public virtual ICollection<AnimeTag> AnimeTags { get; set; }

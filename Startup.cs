@@ -70,14 +70,11 @@ namespace Angeloid
             app.UseRouting();
 
             //CORS config for Front-end url
-            // var frontEndUrl = Configuration["FrontEndUrl"];
-            // app.UseCors(options => options.WithOrigins(frontEndUrl)
-            //                             .AllowAnyMethod()
-            //                             .AllowAnyHeader()
-            //                             .AllowCredentials());
-
-            app.UseCors(options =>options.WithOrigins("http://localhost:3000").AllowAnyMethod().AllowAnyHeader().AllowCredentials());
-
+            var frontEndUrl = Configuration["FrontEndUrl"];
+            app.UseCors(options => options.WithOrigins(frontEndUrl)
+                                        .AllowAnyMethod()
+                                        .AllowAnyHeader()
+                                        .AllowCredentials());
 
             app.UseAuthorization();
 
