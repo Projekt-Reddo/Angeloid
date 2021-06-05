@@ -45,6 +45,9 @@ namespace Angeloid
                 options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
             );
 
+            //Add Cache to api
+            services.AddMemoryCache();
+
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
