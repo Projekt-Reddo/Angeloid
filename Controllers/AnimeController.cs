@@ -12,78 +12,175 @@ using Microsoft.EntityFrameworkCore;
 using Angeloid.DataContext;
 using Angeloid.Models;
 
+//Cache
+using Microsoft.Extensions.Caching.Memory;
+
 namespace Angeloid.Controllers
 {
     [ApiController]
     [Route("api/anime")]
     public class AnimeController : ControllerBase
     {
-
-        //List all anime in db by some type of group
-        // 1: Get anime in this season
-        // 2: Get anime in next season
-        // 3: Get anime popular all time
-        [HttpGet]
-        [Route("all/{type:int}")]
-        public async Task<ActionResult<List<Anime>>> ListAllAnime([FromServices] Context context, int type)
+        //Declare for a Cache 
+        private IMemoryCache _cache;
+        public AnimeController(IMemoryCache memoryCache)
         {
-            switch (type) {
-                // 1: Get anime in this season
-                case 1:
-                    //Get this season time and name in text
-                    DateTime thisSeason = DateTime.Today;
-                    string thisSeasonName = SeasonNaming.getSeasonInText(thisSeason);
+            _cache = memoryCache;
+        }
 
-                    //Get 5 anime in this season
-                    var thisSeasonAnime = await context.Animes
-                                                        .Where(s => s.Season.SeasonName == thisSeasonName) // compare season name
-                                                        .Where(s => s.Season.Year == thisSeason.Year.ToString()) // compare season year
-                                                        .OrderByDescending(a => a.View) // Get only highest view
-                                                        .Take(5) // Get only 5 anime
-                                                        .Include(t => t.Tags) // include all tags
-                                                        .Include(s => s.Studio) //include studio
-                                                        .ToListAsync();
+        //Get anime in this season: First try to find data in cache 
+        //if not call query to db to get data and save to cache
+        [HttpGet]
+        [Route("thisseason")]
+        public async Task<ActionResult<List<Anime>>> ListThisSeasonAnime([FromServices] Context context)
+        {
+            //Get real time of server
+            DateTime thisSeason = DateTime.Today;
+            string thisSeasonName = SeasonNaming.getSeasonInText(thisSeason);
 
-                    if (thisSeasonAnime == null) { break; }
+            //Declare a return variable
+            var thisSeasonAnime = (ActionResult<List<Anime>>)null;
 
-                    return thisSeasonAnime;
+            //Check if data is in Cache
+            bool AlreadyExistThisSeasonAnime = _cache.TryGetValue("CachedThisSeason", out thisSeasonAnime);
 
-                // 2: Get anime in next season
-                case 2:
-                    //Get next season time and name in text
-                    DateTime nextSeason = DateTime.Today.AddMonths(3);
-                    string nextSeasonName = SeasonNaming.getSeasonInText(nextSeason);
+            //If not call query to db 
+            if (!AlreadyExistThisSeasonAnime)
+            {
+                //Get 5 anime in this season
+                thisSeasonAnime = await (from anime in context.Animes
+                                         where anime.Season.SeasonName == thisSeasonName & anime.Season.Year == thisSeason.Year.ToString()
+                                         orderby anime.View descending
+                                         select new Anime
+                                         {
+                                             AnimeId = anime.AnimeId,
+                                             AnimeName = anime.AnimeName,
+                                             Thumbnail = anime.Thumbnail,
+                                             Episode = anime.Episode,
+                                             Studio = anime.Studio,
+                                             Tags = (from tag in anime.Tags
+                                                     orderby tag.TagId ascending
+                                                     select new Tag
+                                                     {
+                                                         TagId = tag.TagId,
+                                                         TagName = tag.TagName
+                                                     }).Take(3).ToList() //take only 3 tag
+                                         }).Take(5).ToListAsync(); //take only 5 anime
 
-                    //Get 5 anime in next season
-                    var nextSeasonAnime = await context.Animes
-                                                        .Where(s => s.Season.SeasonName == nextSeasonName) // compare season name
-                                                        .Where(s => s.Season.Year == nextSeason.Year.ToString()) // compare season year
-                                                        .OrderByDescending(a => a.View) // Get only highest view
-                                                        .Take(5) // Get only 5 anime
-                                                        .Include(t => t.Tags.Take(3)) // include all tags
-                                                        .Include(s => s.Studio) //include studio
-                                                        .ToListAsync();
+                //Config cache setting
+                var cacheEntryOptions = new MemoryCacheEntryOptions()
+                                    .SetSize(20480)
+                                    .SetSlidingExpiration(TimeSpan.FromDays(10));
 
-                    if (nextSeasonAnime == null) { break; }
-
-                    return nextSeasonAnime;
-
-                // 3: Get anime popular all time
-                case 3:
-                    //Get all time popular anime
-                    var allTimePopularAnime = await context.Animes
-                                                        .OrderByDescending(a => a.View) // Get highest view anime
-                                                        .Take(5) // Get only 5 anime
-                                                        .Include(t => t.Tags.Take(3)) // include all tags
-                                                        .Include(s => s.Studio) //include studio
-                                                        .ToListAsync();
-
-                    if (allTimePopularAnime == null) { break; }
-
-                    return allTimePopularAnime;
+                //Add value to cache
+                _cache.Set("CachedThisSeason", thisSeasonAnime, cacheEntryOptions);
             }
 
-            return NotFound();
+            if (thisSeasonAnime == null) { return NotFound(); }
+
+            return thisSeasonAnime;
+        }
+
+        //Get anime in next season: First try to find data in cache 
+        //if not call query to db to get data and save to cache
+        [HttpGet]
+        [Route("nextseason")]
+        public async Task<ActionResult<List<Anime>>> ListNextSeasonAnime([FromServices] Context context, int getAnimeId)
+        {
+            //Get next season time and name in text
+            DateTime nextSeason = DateTime.Today.AddMonths(3);
+            string nextSeasonName = SeasonNaming.getSeasonInText(nextSeason);
+
+            //Declare a return variable
+            var nextSeasonAnime = (ActionResult<List<Anime>>)null;
+
+            //Check if data is in Cache
+            bool AlreadyExistNextSeasonAnime = _cache.TryGetValue("CachedNextSeason", out nextSeasonAnime);
+
+            //If not call query to db 
+            if (!AlreadyExistNextSeasonAnime)
+            {
+                //Get 5 anime in next season
+                nextSeasonAnime = await (from anime in context.Animes
+                                         where anime.Season.SeasonName == nextSeasonName & anime.Season.Year == nextSeason.Year.ToString()
+                                         orderby anime.View descending
+                                         select new Anime
+                                         {
+                                             AnimeId = anime.AnimeId,
+                                             AnimeName = anime.AnimeName,
+                                             Thumbnail = anime.Thumbnail,
+                                             Episode = anime.Episode,
+                                             Studio = anime.Studio,
+                                             Tags = (from tag in anime.Tags
+                                                     orderby tag.TagId ascending
+                                                     select new Tag
+                                                     {
+                                                         TagId = tag.TagId,
+                                                         TagName = tag.TagName
+                                                     }).Take(3).ToList()
+                                         }).Take(5).ToListAsync();
+
+                //Config cache setting                
+                var cacheEntryOptions = new MemoryCacheEntryOptions()
+                                    .SetSize(20480)
+                                    .SetSlidingExpiration(TimeSpan.FromDays(10));
+
+                //Add value to cache
+                _cache.Set("CachedNextSeason", nextSeasonAnime, cacheEntryOptions);
+            }
+
+            if (nextSeasonAnime == null) { return NotFound(); }
+
+            return nextSeasonAnime;
+        }
+
+        //Get anime popular all time: First try to find data in cache 
+        //if not call query to db to get data and save to cache
+        [HttpGet]
+        [Route("alltimepopular")]
+        public async Task<ActionResult<List<Anime>>> ListAllTimePopularAnime([FromServices] Context context, int getAnimeId)
+        {
+            //Declare a return variable
+            var allTimePopularAnime = (ActionResult<List<Anime>>)null;
+
+            //Check if data is in Cache
+            bool AlreadyExistAllTimePopular = _cache.TryGetValue("CachedAllTimePopular", out allTimePopularAnime);
+
+            //If not call query to db
+            if (!AlreadyExistAllTimePopular)
+            {
+                //Get all time popular anime
+                allTimePopularAnime = await (from anime in context.Animes
+                                             orderby anime.View descending
+                                             select new Anime
+                                             {
+                                                 AnimeId = anime.AnimeId,
+                                                 AnimeName = anime.AnimeName,
+                                                 Thumbnail = anime.Thumbnail,
+                                                 Episode = anime.Episode,
+                                                 Studio = anime.Studio,
+                                                 Tags = (from tag in anime.Tags
+                                                         orderby tag.TagId ascending
+                                                         select new Tag
+                                                         {
+                                                             TagId = tag.TagId,
+                                                             TagName = tag.TagName
+                                                         }).Take(3).ToList()
+                                             }).Take(5).ToListAsync();
+
+                //Config cache setting
+                var cacheEntryOptions = new MemoryCacheEntryOptions()
+                                    .SetSize(20480)
+                                    .SetSlidingExpiration(TimeSpan.FromDays(10));
+
+                //Add value to cache
+                _cache.Set("CachedAllTimePopular", allTimePopularAnime, cacheEntryOptions);
+            }
+
+
+            if (allTimePopularAnime == null) { return NotFound(); }
+
+            return allTimePopularAnime;
         }
 
         //Get an anime info
