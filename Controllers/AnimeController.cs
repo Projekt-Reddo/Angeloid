@@ -180,6 +180,48 @@ namespace Angeloid.Controllers
             return allTimePopularAnime;
         }
 
+        //Get anime in the db
+        [HttpGet]
+        [Route("all")]
+        public async Task<ActionResult<List<Anime>>> ListAllAnime([FromServices] Context context, int getAnimeId)
+        {
+            //Declare a return variable
+            var allAnime = (ActionResult<List<Anime>>)null;
+
+            //Check if data is in Cache
+            bool AlreadyExistAll = _cache.TryGetValue("CachedAllAnime", out allAnime);
+
+            //If not call query to db
+            if (!AlreadyExistAll)
+            {
+                //Get all time popular anime
+                allAnime = await (from anime in context.Animes
+                                            select new Anime
+                                            {
+                                                AnimeId = anime.AnimeId,
+                                                AnimeName = anime.AnimeName,
+                                                Status = anime.Status,
+                                                View = anime.View,
+                                                Thumbnail = anime.Thumbnail,
+                                                Episode = anime.Episode,
+                                                Studio = anime.Studio,
+                                            }).ToListAsync();
+
+                //Config cache setting
+                var cacheEntryOptions = new MemoryCacheEntryOptions()
+                                    .SetSize(40480)
+                                    .SetSlidingExpiration(TimeSpan.FromDays(10));
+
+                //Add value to cache
+                _cache.Set("CachedAllAnime", allAnime, cacheEntryOptions);
+            }
+
+
+            if (allAnime == null) { return NotFound(); }
+
+            return allAnime;
+        }
+
         //Get an anime info
         [HttpGet]
         [Route("{getAnimeId:int}")]
