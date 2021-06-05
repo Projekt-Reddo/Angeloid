@@ -23,7 +23,8 @@ namespace Angeloid.Controllers
     {
         //Declare for a Cache 
         private IMemoryCache _cache;
-        public AnimeController(IMemoryCache memoryCache) {
+        public AnimeController(IMemoryCache memoryCache)
+        {
             _cache = memoryCache;
         }
 
@@ -48,23 +49,23 @@ namespace Angeloid.Controllers
             {
                 //Get 5 anime in this season
                 thisSeasonAnime = await (from anime in context.Animes
-                                        where anime.Season.SeasonName == thisSeasonName & anime.Season.Year == thisSeason.Year.ToString()
-                                        orderby anime.View descending
-                                        select new Anime
-                                        {
-                                            AnimeId = anime.AnimeId,
-                                            AnimeName = anime.AnimeName,
-                                            Thumbnail = anime.Thumbnail,
-                                            Episode = anime.Episode,
-                                            Studio = anime.Studio,
-                                            Tags = (from tag in anime.Tags
-                                                    orderby tag.TagId ascending
-                                                    select new Tag
-                                                    {
-                                                        TagId = tag.TagId,
-                                                        TagName = tag.TagName
-                                                    }).Take(3).ToList() //take only 3 tag
-                                        }).Take(5).ToListAsync(); //take only 5 anime
+                                         where anime.Season.SeasonName == thisSeasonName & anime.Season.Year == thisSeason.Year.ToString()
+                                         orderby anime.View descending
+                                         select new Anime
+                                         {
+                                             AnimeId = anime.AnimeId,
+                                             AnimeName = anime.AnimeName,
+                                             Thumbnail = anime.Thumbnail,
+                                             Episode = anime.Episode,
+                                             Studio = anime.Studio,
+                                             Tags = (from tag in anime.Tags
+                                                     orderby tag.TagId ascending
+                                                     select new Tag
+                                                     {
+                                                         TagId = tag.TagId,
+                                                         TagName = tag.TagName
+                                                     }).Take(3).ToList() //take only 3 tag
+                                         }).Take(5).ToListAsync(); //take only 5 anime
 
                 //Config cache setting
                 var cacheEntryOptions = new MemoryCacheEntryOptions()
@@ -101,23 +102,23 @@ namespace Angeloid.Controllers
             {
                 //Get 5 anime in next season
                 nextSeasonAnime = await (from anime in context.Animes
-                                        where anime.Season.SeasonName == nextSeasonName & anime.Season.Year == nextSeason.Year.ToString()
-                                        orderby anime.View descending
-                                        select new Anime
-                                        {
-                                            AnimeId = anime.AnimeId,
-                                            AnimeName = anime.AnimeName,
-                                            Thumbnail = anime.Thumbnail,
-                                            Episode = anime.Episode,
-                                            Studio = anime.Studio,
-                                            Tags = (from tag in anime.Tags
-                                                    orderby tag.TagId ascending
-                                                    select new Tag
-                                                    {
-                                                        TagId = tag.TagId,
-                                                        TagName = tag.TagName
-                                                    }).Take(3).ToList()
-                                        }).Take(5).ToListAsync();
+                                         where anime.Season.SeasonName == nextSeasonName & anime.Season.Year == nextSeason.Year.ToString()
+                                         orderby anime.View descending
+                                         select new Anime
+                                         {
+                                             AnimeId = anime.AnimeId,
+                                             AnimeName = anime.AnimeName,
+                                             Thumbnail = anime.Thumbnail,
+                                             Episode = anime.Episode,
+                                             Studio = anime.Studio,
+                                             Tags = (from tag in anime.Tags
+                                                     orderby tag.TagId ascending
+                                                     select new Tag
+                                                     {
+                                                         TagId = tag.TagId,
+                                                         TagName = tag.TagName
+                                                     }).Take(3).ToList()
+                                         }).Take(5).ToListAsync();
 
                 //Config cache setting                
                 var cacheEntryOptions = new MemoryCacheEntryOptions()
@@ -150,20 +151,22 @@ namespace Angeloid.Controllers
             {
                 //Get all time popular anime
                 allTimePopularAnime = await (from anime in context.Animes
-                                            orderby anime.View descending
-                                            select new Anime{
-                                                AnimeId = anime.AnimeId,
-                                                AnimeName = anime.AnimeName,
-                                                Thumbnail = anime.Thumbnail,
-                                                Episode = anime.Episode,
-                                                Studio = anime.Studio,
-                                                Tags = (from tag in anime.Tags
-                                                    orderby tag.TagId ascending
-                                                    select new Tag{
-                                                        TagId = tag.TagId,
-                                                        TagName = tag.TagName
-                                                    }).Take(3).ToList()
-                                            }).Take(5).ToListAsync();
+                                             orderby anime.View descending
+                                             select new Anime
+                                             {
+                                                 AnimeId = anime.AnimeId,
+                                                 AnimeName = anime.AnimeName,
+                                                 Thumbnail = anime.Thumbnail,
+                                                 Episode = anime.Episode,
+                                                 Studio = anime.Studio,
+                                                 Tags = (from tag in anime.Tags
+                                                         orderby tag.TagId ascending
+                                                         select new Tag
+                                                         {
+                                                             TagId = tag.TagId,
+                                                             TagName = tag.TagName
+                                                         }).Take(3).ToList()
+                                             }).Take(5).ToListAsync();
 
                 //Config cache setting
                 var cacheEntryOptions = new MemoryCacheEntryOptions()
@@ -227,7 +230,17 @@ namespace Angeloid.Controllers
         [Route("{getAnimeId:int}")]
         public async Task<ActionResult<List<Anime>>> GetAnime([FromServices] Context context, int getAnimeId)
         {
-            return null;
+            var anime = await context.Animes
+                                        .Where(a => a.AnimeId == getAnimeId)
+                                        .Include(t => t.Tags)
+                                        .Include(s => s.Season)
+                                        .Include(s => s.Studio)
+                                        .Include(c => c.Characters).ThenInclude(s => s.Seiyuu)
+                                        .FirstOrDefaultAsync(a => a.AnimeId == getAnimeId);
+
+            if (anime == null) { return NotFound(); }
+
+            return Ok(anime);
         }
 
         //Insert new anime
