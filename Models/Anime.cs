@@ -23,12 +23,12 @@ namespace Angeloid.Models
         public virtual ICollection<Character> Characters { get; set; }
 
         // Relationship to Season
-        [IgnoreDataMember]
+        // [IgnoreDataMember]
         public int? SeasonId { get; set; } = null!;
         public Season Season { get; set; }
 
         // Relationship to Studio
-        [IgnoreDataMember]
+        // [IgnoreDataMember]
         public int? StudioId { get; set; } = null!;
         public Studio Studio { get; set; }
 

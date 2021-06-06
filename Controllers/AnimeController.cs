@@ -49,21 +49,21 @@ namespace Angeloid.Controllers
             {
                 //Get 5 anime in this season
                 thisSeasonAnime = await (from anime in context.Animes
-                                         where anime.Season.SeasonName == thisSeasonName & anime.Season.Year == thisSeason.Year.ToString()
-                                         orderby anime.View descending
-                                         select new Anime
-                                         {
-                                             AnimeId = anime.AnimeId,
-                                             AnimeName = anime.AnimeName,
-                                             Thumbnail = anime.Thumbnail,
-                                             Episode = anime.Episode,
-                                             Studio = anime.Studio,
-                                             Tags = (from tag in anime.Tags
-                                                     orderby tag.TagId ascending
-                                                     select new Tag
-                                                     {
-                                                         TagId = tag.TagId,
-                                                         TagName = tag.TagName
+                                        where anime.Season.SeasonName == thisSeasonName & anime.Season.Year == thisSeason.Year.ToString()
+                                        orderby anime.View descending
+                                        select new Anime
+                                        {
+                                            AnimeId = anime.AnimeId,
+                                            AnimeName = anime.AnimeName,
+                                            Thumbnail = anime.Thumbnail,
+                                            Episode = anime.Episode,
+                                            Studio = anime.Studio,
+                                            Tags = (from tag in anime.Tags
+                                                    orderby tag.TagId ascending
+                                                    select new Tag
+                                                    {
+                                                        TagId = tag.TagId,
+                                                        TagName = tag.TagName
                                                      }).Take(3).ToList() //take only 3 tag
                                          }).Take(5).ToListAsync(); //take only 5 anime
 
@@ -102,23 +102,23 @@ namespace Angeloid.Controllers
             {
                 //Get 5 anime in next season
                 nextSeasonAnime = await (from anime in context.Animes
-                                         where anime.Season.SeasonName == nextSeasonName & anime.Season.Year == nextSeason.Year.ToString()
-                                         orderby anime.View descending
-                                         select new Anime
-                                         {
-                                             AnimeId = anime.AnimeId,
-                                             AnimeName = anime.AnimeName,
-                                             Thumbnail = anime.Thumbnail,
-                                             Episode = anime.Episode,
-                                             Studio = anime.Studio,
-                                             Tags = (from tag in anime.Tags
-                                                     orderby tag.TagId ascending
-                                                     select new Tag
-                                                     {
-                                                         TagId = tag.TagId,
-                                                         TagName = tag.TagName
-                                                     }).Take(3).ToList()
-                                         }).Take(5).ToListAsync();
+                                        where anime.Season.SeasonName == nextSeasonName & anime.Season.Year == nextSeason.Year.ToString()
+                                        orderby anime.View descending
+                                        select new Anime
+                                        {
+                                            AnimeId = anime.AnimeId,
+                                            AnimeName = anime.AnimeName,
+                                            Thumbnail = anime.Thumbnail,
+                                            Episode = anime.Episode,
+                                            Studio = anime.Studio,
+                                            Tags = (from tag in anime.Tags
+                                                    orderby tag.TagId ascending
+                                                    select new Tag
+                                                    {
+                                                        TagId = tag.TagId,
+                                                        TagName = tag.TagName
+                                                    }).Take(3).ToList()
+                                        }).Take(5).ToListAsync();
 
                 //Config cache setting                
                 var cacheEntryOptions = new MemoryCacheEntryOptions()
@@ -151,22 +151,22 @@ namespace Angeloid.Controllers
             {
                 //Get all time popular anime
                 allTimePopularAnime = await (from anime in context.Animes
-                                             orderby anime.View descending
-                                             select new Anime
-                                             {
-                                                 AnimeId = anime.AnimeId,
-                                                 AnimeName = anime.AnimeName,
-                                                 Thumbnail = anime.Thumbnail,
-                                                 Episode = anime.Episode,
-                                                 Studio = anime.Studio,
-                                                 Tags = (from tag in anime.Tags
-                                                         orderby tag.TagId ascending
-                                                         select new Tag
-                                                         {
-                                                             TagId = tag.TagId,
-                                                             TagName = tag.TagName
-                                                         }).Take(3).ToList()
-                                             }).Take(5).ToListAsync();
+                                            orderby anime.View descending
+                                            select new Anime
+                                            {
+                                                AnimeId = anime.AnimeId,
+                                                AnimeName = anime.AnimeName,
+                                                Thumbnail = anime.Thumbnail,
+                                                Episode = anime.Episode,
+                                                Studio = anime.Studio,
+                                                Tags = (from tag in anime.Tags
+                                                        orderby tag.TagId ascending
+                                                        select new Tag
+                                                        {
+                                                            TagId = tag.TagId,
+                                                            TagName = tag.TagName
+                                                        }).Take(3).ToList()
+                                            }).Take(5).ToListAsync();
 
                 //Config cache setting
                 var cacheEntryOptions = new MemoryCacheEntryOptions()
@@ -250,10 +250,94 @@ namespace Angeloid.Controllers
         {
             if (!ModelState.IsValid) { return BadRequest(ModelState); }
 
-            var anime = context.Animes.Where(a => a.AnimeId == inputAnime.AnimeId);
+            //Get characters from inputAnime and set inputAnime Characters to null
+            var inputCharacters = (from ch in inputAnime.Characters
+                                    select new Character
+                                    {
+                                        CharacterName = ch.CharacterName,
+                                        CharacterRole = ch.CharacterRole,
+                                        CharacterImage = ch.CharacterImage,
+                                        Seiyuu = ch.Seiyuu
+                                    }).ToList();
+            inputAnime.Characters = null;
 
+            //Get tags from input anime and set inputAnim Tags to null
+            var inputTags = (from tg in inputAnime.Tags
+                                    select new Tag
+                                    {
+                                        TagId = tg.TagId
+                                    }).ToList();
+            inputAnime.Tags = null;
 
-            return Ok(anime);
+            //Add anime to db
+            context.Animes.Add(inputAnime);
+            await context.SaveChangesAsync();
+
+            var dbAnime = await (from anime in context.Animes
+                                where anime.AnimeName == inputAnime.AnimeName
+                                select new Anime {
+                                    AnimeId = anime.AnimeId
+                                }).FirstOrDefaultAsync();
+
+            // insert characters and seiyuu info
+            foreach (var character in inputCharacters)
+            {
+                //check Seiyuu is existed or not
+                var existSeiyuu = await context.Seiyuus
+                            .FirstOrDefaultAsync(se => se.SeiyuuName == character.Seiyuu.SeiyuuName);
+
+                // if seiyuu is not exist in db -> insert (new seiyuu)
+                if (existSeiyuu == null)
+                {
+                    // add new seiyuu in db
+                    context.Seiyuus.Add(
+                        new Seiyuu
+                        {
+                            SeiyuuName = character.Seiyuu.SeiyuuName,
+                            SeiyuuImage = character.Seiyuu.SeiyuuImage
+                        }
+                    );
+                    await context.SaveChangesAsync();
+                }
+
+                //Get seiyuuId from inserted seiyuu
+                var dbSeiyuu = await (from se in context.Seiyuus
+                                        where se.SeiyuuName == character.Seiyuu.SeiyuuName
+                                        select new Seiyuu
+                                        {
+                                            SeiyuuId = se.SeiyuuId
+                                        }).FirstOrDefaultAsync();
+
+                // add new character to db
+                context.Characters.Add(
+                    new Character
+                    {
+                        CharacterName = character.CharacterName,
+                        CharacterRole = character.CharacterRole,
+                        CharacterImage = character.CharacterImage,
+                        AnimeId = dbAnime.AnimeId,
+                        SeiyuuId = dbSeiyuu.SeiyuuId
+                    }
+                );
+                await context.SaveChangesAsync();
+            }
+
+            // insert tagId and animeId to maptable AnimeTag
+            foreach (var tag in inputTags)
+            {
+                System.Console.WriteLine(tag.TagId);
+                context.AnimeTags.Add(
+                    new AnimeTag {
+                        AnimeId = dbAnime.AnimeId,
+                        TagId = tag.TagId
+                    }
+                );
+
+                await context.SaveChangesAsync();
+            }
+            
+
+            return Ok("Add done");
         }
 
         //Delete a selected anime
@@ -272,18 +356,18 @@ namespace Angeloid.Controllers
         {
             if (!ModelState.IsValid) { return BadRequest(ModelState); }
 
-            var existingAnime = await context.Animes.FirstOrDefaultAsync(a => a.AnimeId == updateAnimeId);
+            var existingAnime = await context.Animes.Include(a => a.Characters).FirstOrDefaultAsync(a => a.AnimeId == updateAnimeId);
 
-            if (existingAnime != null)
-            {
-                existingAnime.Wallpaper = updateAnime.Wallpaper;
-                existingAnime.Thumbnail = updateAnime.Thumbnail;
-                await context.SaveChangesAsync();
+            // if (existingAnime != null)
+            // {
+            //     existingAnime.Wallpaper = updateAnime.Wallpaper;
+            //     existingAnime.Thumbnail = updateAnime.Thumbnail;
+            //     await context.SaveChangesAsync();
 
-                return Ok("Change done.");
-            }
+            //     return Ok("Change done.");
+            // }
 
-            return Ok("Update done.");
+            return Ok(existingAnime);
         }
     }
 }
