@@ -3,7 +3,7 @@ using System;
 namespace Angeloid.Controllers
 {   
     //Class for getting name of an object
-    public static class SeasonNaming
+    public static class Helper
     {
         // Return seasonName in text 
         public static string getSeasonInText(DateTime season) {
