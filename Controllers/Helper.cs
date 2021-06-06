@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using Angeloid.Models;
 
 namespace Angeloid.Controllers
 {   
@@ -22,6 +25,44 @@ namespace Angeloid.Controllers
             }
             
             return "Fall";
+        }
+
+        public static bool isTheSameTag(List<Tag> l1, List<Tag> l2)
+        {
+            if (l1.Count() == l2.Count())
+            {
+                for (int i = 0; i < l1.Count(); i++)
+                {
+                    if (l1[i].TagId != l2[i].TagId)
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public static bool isTheSameCharacter(List<Character> l1, List<Character> l2)
+        {
+            if (l1.Count() == l2.Count())
+            {
+                for (int i = 0; i < l1.Count(); i++)
+                {
+                    if (!l1[i].CharacterName.Equals(l2[i].CharacterName))
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
     }
 }
