@@ -36,7 +36,7 @@ namespace Angeloid.Controllers
         {
             //Get real time of server
             DateTime thisSeason = DateTime.Today;
-            string thisSeasonName = SeasonNaming.getSeasonInText(thisSeason);
+            string thisSeasonName = Helper.getSeasonInText(thisSeason);
 
             //Declare a return variable
             var thisSeasonAnime = (ActionResult<List<Anime>>)null;
@@ -89,7 +89,7 @@ namespace Angeloid.Controllers
         {
             //Get next season time and name in text
             DateTime nextSeason = DateTime.Today.AddMonths(3);
-            string nextSeasonName = SeasonNaming.getSeasonInText(nextSeason);
+            string nextSeasonName = Helper.getSeasonInText(nextSeason);
 
             //Declare a return variable
             var nextSeasonAnime = (ActionResult<List<Anime>>)null;
