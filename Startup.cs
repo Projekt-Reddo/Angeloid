@@ -18,6 +18,14 @@ using Microsoft.EntityFrameworkCore;
 //DbContext
 using Angeloid.DataContext;
 
+//Error and Exception handle
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Http;
+using System.Net;
+
+//Local services
+using Angeloid.Services;
+
 namespace Angeloid
 {
     public class Startup
@@ -64,6 +72,26 @@ namespace Angeloid
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Angeloid v1"));
             }
+
+            //Config for Exception format
+            app.UseExceptionHandler(config =>
+            {
+                config.Run(async context =>
+                {
+                    context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                    context.Response.ContentType = "application/json";
+                    var error = context.Features.Get<IExceptionHandlerFeature>();
+                    if (error != null)
+                    {
+                        var ex = error.Error;
+                        await context.Response.WriteAsync(new ErrorDetails()
+                        {
+                            StatusCode = context.Response.StatusCode,
+                            Message = ex.Message
+                        }.ToString());
+                    }
+                });
+            });
 
             app.UseHttpsRedirection();
 

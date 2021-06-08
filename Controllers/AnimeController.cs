@@ -23,9 +23,11 @@ namespace Angeloid.Controllers
     {
         //Declare for a Cache 
         private IMemoryCache _cache;
-        public AnimeController(IMemoryCache memoryCache)
+        private readonly ILogger _logger;
+        public AnimeController(IMemoryCache memoryCache, ILogger<AnimeController> logger)
         {
             _cache = memoryCache;
+            _logger = logger;
         }
 
         //Get anime in this season: First try to find data in cache 
@@ -269,6 +271,16 @@ namespace Angeloid.Controllers
                                     }).ToList();
             inputAnime.Tags = null;
 
+            //Get season id 
+            var inputSeason = inputAnime.Season;
+            var dbSeason = (from season in context.Seasons
+                            where season.SeasonName == inputSeason.SeasonName && season.Year == inputSeason.Year
+                            select new Season {
+                                SeasonId = season.SeasonId
+                            }).FirstOrDefault();
+            inputAnime.Season = null;
+            inputAnime.SeasonId = dbSeason.SeasonId;
+
             //Add anime to db
             context.Animes.Add(inputAnime);
             await context.SaveChangesAsync();
@@ -325,7 +337,6 @@ namespace Angeloid.Controllers
             // insert tagId and animeId to maptable AnimeTag
             foreach (var tag in inputTags)
             {
-                System.Console.WriteLine(tag.TagId);
                 context.AnimeTags.Add(
                     new AnimeTag {
                         AnimeId = dbAnime.AnimeId,
@@ -364,7 +375,7 @@ namespace Angeloid.Controllers
         [Route("{updateAnimeId:int}")]
         public async Task<ActionResult<Anime>> UpdateAnime([FromServices] Context context, [FromBody] Anime updateAnime, int updateAnimeId)
         {
-             /*
+            /*
                 1.tìm anime trong db với animeId == updateAnimeId
                 2.nếu có anime thì update:
                     2.1: seiyuus với characters:
@@ -422,22 +433,22 @@ namespace Angeloid.Controllers
                                     }).ToListAsync();
                 // 2.1.2: lấy characters từ update Anime
                 var updateCharactes = (from ch in updateAnime.Characters
-                                       select new Character
-                                       {
-                                           CharacterName = ch.CharacterName,
-                                           CharacterRole = ch.CharacterRole,
-                                           CharacterImage = ch.CharacterImage,
-                                           Seiyuu = ch.Seiyuu
-                                       }).ToList();
+                                        select new Character
+                                        {
+                                            CharacterName = ch.CharacterName,
+                                            CharacterRole = ch.CharacterRole,
+                                            CharacterImage = ch.CharacterImage,
+                                            Seiyuu = ch.Seiyuu
+                                        }).ToList();
 
                 // if (!Util.isTheSameChar(dbCharacters, updateCharactes))
                 // {
 
                 // 2.1.3: remove all chacter's AnimeId foreign key
                 context.Characters
-                         .Where(ch => ch.AnimeId == updateAnimeId)
-                         .ToList()
-                         .ForEach(ch => ch.AnimeId = null);
+                        .Where(ch => ch.AnimeId == updateAnimeId)
+                        .ToList()
+                        .ForEach(ch => ch.AnimeId = null);
                 await context.SaveChangesAsync();
 
                 // 2.1.4: update characters and seiyuu info
@@ -468,11 +479,11 @@ namespace Angeloid.Controllers
                     if (existChar == null)
                     {
                         var dbSeiyuu = await (from se in context.Seiyuus
-                                              where se.SeiyuuName == character.Seiyuu.SeiyuuName
-                                              select new Seiyuu
-                                              {
-                                                  SeiyuuId = se.SeiyuuId
-                                              }).FirstOrDefaultAsync();
+                                                where se.SeiyuuName == character.Seiyuu.SeiyuuName
+                                                select new Seiyuu
+                                                {
+                                                    SeiyuuId = se.SeiyuuId
+                                                }).FirstOrDefaultAsync();
                         // add new character in db
                         context.Characters.Add(
                             new Character
@@ -491,11 +502,11 @@ namespace Angeloid.Controllers
                         // if character is existed in db 
                         // get new seiyuu just updated 
                         var dbSeiyuu = await (from se in context.Seiyuus
-                                              where se.SeiyuuName == character.Seiyuu.SeiyuuName
-                                              select new Seiyuu
-                                              {
-                                                  SeiyuuId = se.SeiyuuId
-                                              }).FirstOrDefaultAsync();
+                                            where se.SeiyuuName == character.Seiyuu.SeiyuuName
+                                            select new Seiyuu
+                                            {
+                                                SeiyuuId = se.SeiyuuId
+                                            }).FirstOrDefaultAsync();
                         // change animeId to updateAnimeId
                         context.Characters
                         .Where(ch => ch.CharacterName == character.CharacterName)
@@ -519,11 +530,11 @@ namespace Angeloid.Controllers
                         }).ToListAsync();
                 // get updated Tags
                 var updateTags = (from at in updateAnime.Tags
-                                  select new Tag
-                                  {
-                                      TagId = at.TagId,
-                                      TagName = at.TagName
-                                  }).ToList();
+                                    select new Tag
+                                    {
+                                        TagId = at.TagId,
+                                        TagName = at.TagName
+                                    }).ToList();
 
                 // compare if tags in db and updated Tags is the same
                 var rs = Helper.isTheSameTag(tags, updateTags);
