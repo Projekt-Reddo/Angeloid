@@ -43,7 +43,9 @@ namespace Angeloid.Controllers
                                         UserName = u.UserName,
                                         Email = u.Email,
                                         Gender = u.Gender,
-                                        Avatar = u.Avatar
+                                        Avatar = u.Avatar,
+                                        Fullname = u.Fullname,
+                                        IsAdmin = u.IsAdmin
                                     }
                                 )
                                 .FirstOrDefaultAsync();
@@ -81,15 +83,22 @@ namespace Angeloid.Controllers
         {
             if (!ModelState.IsValid) { return BadRequest(ModelState); }
 
+            // Find the email from db, if it exists, return problem
+            var existingEmail = await context.Users.FirstOrDefaultAsync(u => u.Email == user.Email);
+            if (existingEmail != null && existingEmail.UserId != user.UserId) {
+                throw new Exception("Email Exist");
+            }
+
             var existingUser = await context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
             if (existingUser != null) {
                 existingUser.Email = user.Email;
                 existingUser.Gender = user.Gender;
+                existingUser.Fullname = user.Fullname;
                 await context.SaveChangesAsync();
-                return Ok("Update done.");
+                return Ok();
             }
 
-            return Ok("Update done.");
+            return NotFound();
         }
 
         //Update user avatar
@@ -127,7 +136,7 @@ namespace Angeloid.Controllers
                 return Ok("Update done.");
             }
             
-            return Problem("Wrong old password");
+            throw new Exception("Wrong Password!");
         }
     }
 }
