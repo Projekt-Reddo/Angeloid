@@ -24,10 +24,22 @@ namespace Angeloid.Controllers
         public async Task<ActionResult<List<User>>> ListAllUser([FromServices] Context context)
         {
             // Allow cors
-            Response.Headers.Add("Access-Control-Allow-Origin","*");
+            // Response.Headers.Add("Access-Control-Allow-Origin","*");
 
-            var users = await context.Users.ToListAsync();
-            if (users == null) {return NotFound();}
+            var users = await (
+                from user in context.Users
+                select new User
+                {
+                    UserId = user.UserId,
+                    FacebookId = user.FacebookId,
+                    UserName = user.UserName,
+                    Email = user.Email,
+                    Gender = user.Gender,
+                    Avatar = user.Avatar,
+                    IsAdmin = user.IsAdmin,
+                }
+            ).ToListAsync();
+            if (users == null) { return NotFound(); }
             return users;
         }
 
@@ -38,7 +50,8 @@ namespace Angeloid.Controllers
             var user = await context.Users
                                 .Where(u => u.UserId == userId)
                                 .Select(
-                                    u => new User {
+                                    u => new User
+                                    {
                                         UserId = u.UserId,
                                         UserName = u.UserName,
                                         Email = u.Email,
@@ -59,12 +72,12 @@ namespace Angeloid.Controllers
         public async Task<ActionResult<User>> InsertUser([FromServices] Context context, [FromBody] User user)
         {
             // Allow cors
-            Response.Headers.Add("Access-Control-Allow-Origin","*");
+            Response.Headers.Add("Access-Control-Allow-Origin", "*");
 
-            if(!ModelState.IsValid) {return BadRequest(ModelState);}
+            if (!ModelState.IsValid) { return BadRequest(ModelState); }
             // Check existed Username
             var ExistUser = await context.Users.FirstOrDefaultAsync(u => u.UserName == user.UserName);
-            if (ExistUser != null) { return BadRequest("User name already existed");}
+            if (ExistUser != null) { return BadRequest("User name already existed"); }
 
             // var FacebookUser = await context.Users.FirstOrDefaultAsync(u => u.FacebookId == user.FacebookId);
             // if (FacebookUser != null) { return BadRequest("Facebook Login");}
@@ -82,7 +95,8 @@ namespace Angeloid.Controllers
             if (!ModelState.IsValid) { return BadRequest(ModelState); }
 
             var existingUser = await context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
-            if (existingUser != null) {
+            if (existingUser != null)
+            {
                 existingUser.Email = user.Email;
                 existingUser.Gender = user.Gender;
                 await context.SaveChangesAsync();
@@ -100,13 +114,31 @@ namespace Angeloid.Controllers
             if (!ModelState.IsValid) { return BadRequest(ModelState); }
 
             var existingUser = await context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
-            if (existingUser != null) {
+            if (existingUser != null)
+            {
                 existingUser.Avatar = user.Avatar;
                 await context.SaveChangesAsync();
                 return Ok("Update done.");
             }
 
             return NotFound();
+        }
+
+        //Delete user
+        [HttpDelete]
+        [Route("{deleteUserid:int}")]
+        public async Task<ActionResult<User>> DeleteUser([FromServices] Context context, int deleteUserid)
+        {
+            if (!ModelState.IsValid) { return BadRequest(ModelState); }
+
+            var existingUser = await context.Users.FirstOrDefaultAsync(user => user.UserId == deleteUserid);
+            if (existingUser != null)
+            {
+                context.Remove(existingUser);
+                await context.SaveChangesAsync();
+            }
+            else { return NotFound(); }
+            return Ok("Delete Done");
         }
     }
 }
