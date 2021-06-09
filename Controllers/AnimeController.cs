@@ -427,6 +427,12 @@ namespace Angeloid.Controllers
                                     SeasonId = a.SeasonId
                                 }
                             ).FirstOrDefaultAsync();
+            // Lấy season từ db
+            var dbSeason = (from season in context.Seasons
+                            where season.SeasonName == updateAnime.Season.SeasonName && season.Year == updateAnime.Season.Year
+                            select new Season {
+                                SeasonId = season.SeasonId
+                            }).FirstOrDefault();
 
 
 
@@ -587,9 +593,10 @@ namespace Angeloid.Controllers
                     contextAnime.StudioId = updateAnime.Studio.StudioId;
                 }
                 // update season id
-                if (dbAnime.SeasonId != updateAnime.Season.SeasonId)
-                {
-                    contextAnime.SeasonId = updateAnime.Season.SeasonId;
+                // if updated season id is equals dbAnime season id
+                if (dbAnime.SeasonId != dbSeason.SeasonId)
+                {   
+                    contextAnime.SeasonId = dbSeason.SeasonId;
                 }
 
                 // update Anime Name
