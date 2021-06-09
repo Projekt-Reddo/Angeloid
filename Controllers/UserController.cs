@@ -45,7 +45,7 @@ namespace Angeloid.Controllers
 
         [HttpGet]
         [Route("{userId:int}")]
-        public async Task<ActionResult<Anime>> GetUser([FromServices] Context context, int userId)
+        public async Task<ActionResult<User>> GetUser([FromServices] Context context, int userId)
         {
             var user = await context.Users
                                 .Where(u => u.UserId == userId)
@@ -90,7 +90,7 @@ namespace Angeloid.Controllers
         //Update user profile
         [HttpPut]
         [Route("profile/{userId:int}")]
-        public async Task<ActionResult<Anime>> UpdateUser([FromServices] Context context, [FromBody] User user, int userId)
+        public async Task<ActionResult<User>> UpdateUser([FromServices] Context context, [FromBody] User user, int userId)
         {
             if (!ModelState.IsValid) { return BadRequest(ModelState); }
 
@@ -109,7 +109,7 @@ namespace Angeloid.Controllers
         //Update user avatar
         [HttpPut]
         [Route("avatar/{userId:int}")]
-        public async Task<ActionResult<Anime>> UpdateAvatar([FromServices] Context context, [FromBody] User user, int userId)
+        public async Task<ActionResult<User>> UpdateAvatar([FromServices] Context context, [FromBody] User user, int userId)
         {
             if (!ModelState.IsValid) { return BadRequest(ModelState); }
 
@@ -139,6 +139,29 @@ namespace Angeloid.Controllers
             }
             else { return NotFound(); }
             return Ok("Delete Done");
+        }
+
+        //Update user password
+        [HttpPut]
+        [Route("password/{userId:int}")]
+        public async Task<ActionResult<User>> UpdatePassword([FromServices] Context context, [FromBody] UserPassword user, int userId)
+        {
+            if (!ModelState.IsValid) { return BadRequest(ModelState); }
+
+            var existingUser = await context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+            if (existingUser == null)
+            {
+                return NotFound();
+            }
+
+            if (existingUser.Password == user.OldPassword)
+            {
+                existingUser.Password = user.NewPassword;
+                await context.SaveChangesAsync();
+                return Ok("Update done.");
+            }
+
+            return Problem("Wrong old password");
         }
     }
 }
