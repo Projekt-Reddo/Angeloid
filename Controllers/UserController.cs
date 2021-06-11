@@ -33,6 +33,7 @@ namespace Angeloid.Controllers
                     UserId = user.UserId,
                     FacebookId = user.FacebookId,
                     UserName = user.UserName,
+                    Password = user.Password,
                     Email = user.Email,
                     Gender = user.Gender,
                     Avatar = user.Avatar,
@@ -66,27 +67,49 @@ namespace Angeloid.Controllers
             if (user != null) { return Ok(user); }
             return NotFound();
         }
-
-
-        //Insert new user (register)
         [HttpPost]
         [Route("")]
-        public async Task<ActionResult<User>> InsertUser([FromServices] Context context, [FromBody] User user)
+        public async Task<ActionResult<User>> Register([FromServices] Context context, [FromBody] User user)
         {
-            // Allow cors
-            Response.Headers.Add("Access-Control-Allow-Origin", "*");
-
             if (!ModelState.IsValid) { return BadRequest(ModelState); }
             // Check existed Username
             var ExistUser = await context.Users.FirstOrDefaultAsync(u => u.UserName == user.UserName);
-            if (ExistUser != null) { return BadRequest("User name already existed"); }
+            if (ExistUser != null) { return BadRequest("User name already existed");}
+            var ExistEmail = await context.Users.FirstOrDefaultAsync(u => u.Email == user.Email);
+            if (ExistEmail != null) { return BadRequest("Email already existed");}
+            
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+            return Ok("Register Done");
+        }
+        //Insert new user (register)
+        [HttpPost]
+        [Route("facebook")]
+        public async Task<ActionResult<User>> InsertUser([FromServices] Context context, [FromBody] User user)
+        {
 
-            // var FacebookUser = await context.Users.FirstOrDefaultAsync(u => u.FacebookId == user.FacebookId);
-            // if (FacebookUser != null) { return BadRequest("Facebook Login");}
+            if (!ModelState.IsValid) { return BadRequest(ModelState); }
+
+            var FacebookUser = await context.Users.Where(u => u.FacebookId == user.FacebookId && u.FacebookId != null).Select(
+                u => new User {
+                    UserId = u.UserId,
+                    IsAdmin = u.IsAdmin,
+                    Avatar = u.Avatar
+                }
+            ).FirstOrDefaultAsync();
+            if (FacebookUser != null) { return FacebookUser ;}
 
             context.Users.Add(user);
             await context.SaveChangesAsync();
-            return Ok("Register done.");
+
+            FacebookUser = await context.Users.Where(u => u.FacebookId == user.FacebookId).Select(
+                u => new User {
+                    UserId = u.UserId,
+                    IsAdmin = u.IsAdmin,
+                    Avatar = u.Avatar
+                }
+            ).FirstOrDefaultAsync();
+            return FacebookUser;
         }
 
         //Update user profile
