@@ -77,7 +77,7 @@ namespace Angeloid.Controllers
             if (ExistUser != null) { return BadRequest("User name already existed");}
             var ExistEmail = await context.Users.FirstOrDefaultAsync(u => u.Email == user.Email);
             if (ExistEmail != null) { return BadRequest("Email already existed");}
-
+            
             context.Users.Add(user);
             await context.SaveChangesAsync();
             return Ok("Register Done");
