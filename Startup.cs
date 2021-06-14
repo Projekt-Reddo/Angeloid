@@ -26,6 +26,9 @@ using System.Net;
 //Local services
 using Angeloid.Services;
 
+//Models
+using Angeloid.Models;
+
 namespace Angeloid
 {
     public class Startup
@@ -47,6 +50,17 @@ namespace Angeloid
             string connnectionString = Configuration.GetConnectionString("DefaultConnection");
             services.AddDbContext<Context>(opt => opt.UseSqlServer(connnectionString));
             services.AddScoped<Context, Context>();
+
+            //Add Email Service
+            var emailConfig = Configuration.GetSection("Email").Get<EmailConfig>();
+            string frontEndUrl = Configuration["FrontEndUrl"];
+            services.AddScoped<IEmailService>(sp => new EmailService(emailConfig, frontEndUrl));
+
+            //Add Token Service Singleton
+            services.AddSingleton<ITokenService, TokenService>();
+            
+            //Add Services to Scope
+            services.AddScoped<IUserService, UserService>();
 
             //JSON config
             services.AddControllers().AddNewtonsoftJson(options =>
