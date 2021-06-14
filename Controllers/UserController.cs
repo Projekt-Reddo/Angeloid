@@ -12,103 +12,102 @@ using Microsoft.EntityFrameworkCore;
 using Angeloid.DataContext;
 using Angeloid.Models;
 
+using Angeloid.Services;
+
 namespace Angeloid.Controllers
 {
+
     [ApiController]
     [Route("api/user")]
     public class UserController : ControllerBase
     {
+        private IUserService _userService;
+        private IEmailService _emailService;
+        private ITokenService _tokenService;
+        public UserController(IUserService userService, IEmailService emailService, ITokenService tokenService)
+        {
+            _userService = userService;
+            _emailService = emailService;
+            _tokenService = tokenService;
+        }
+
         // List all users
         [HttpGet]
         [Route("")]
-        public async Task<ActionResult<List<User>>> ListAllUser([FromServices] Context context)
+        public async Task<ActionResult<List<User>>> ListAllUser()
         {
-            // Allow cors
-            // Response.Headers.Add("Access-Control-Allow-Origin","*");
+            var users = await _userService.ListAllUser();
 
-            var users = await (
-                from user in context.Users
-                select new User
-                {
-                    UserId = user.UserId,
-                    FacebookId = user.FacebookId,
-                    UserName = user.UserName,
-                    Email = user.Email,
-                    Gender = user.Gender,
-                    Avatar = user.Avatar,
-                    IsAdmin = user.IsAdmin,
-                }
-            ).ToListAsync();
-            if (users == null) { return NotFound(); }
-            return users;
+            if (users != null) { return users; }
+            return NotFound();
         }
 
         [HttpGet]
         [Route("{userId:int}")]
-        public async Task<ActionResult<User>> GetUser([FromServices] Context context, int userId)
+        public async Task<ActionResult<User>> GetUser(int userId)
         {
-            var user = await context.Users
-                                .Where(u => u.UserId == userId)
-                                .Select(
-                                    u => new User
-                                    {
-                                        UserId = u.UserId,
-                                        UserName = u.UserName,
-                                        Email = u.Email,
-                                        Gender = u.Gender,
-                                        Avatar = u.Avatar,
-                                        Fullname = u.Fullname,
-                                        IsAdmin = u.IsAdmin
-                                    }
-                                )
-                                .FirstOrDefaultAsync();
+            var user = await _userService.GetUserById(userId);
 
             if (user != null) { return Ok(user); }
             return NotFound();
         }
-
-
-        //Insert new user (register)
         [HttpPost]
         [Route("")]
-        public async Task<ActionResult<User>> InsertUser([FromServices] Context context, [FromBody] User user)
+        public async Task<ActionResult<User>> Register([FromServices] Context context, [FromBody] User user)
         {
-            // Allow cors
-            Response.Headers.Add("Access-Control-Allow-Origin", "*");
-
             if (!ModelState.IsValid) { return BadRequest(ModelState); }
             // Check existed Username
             var ExistUser = await context.Users.FirstOrDefaultAsync(u => u.UserName == user.UserName);
-            if (ExistUser != null) { return BadRequest("User name already existed"); }
+            if (ExistUser != null) { return BadRequest("User name already existed");}
+            var ExistEmail = await context.Users.FirstOrDefaultAsync(u => u.Email == user.Email);
+            if (ExistEmail != null) { return BadRequest("Email already existed");}
+            
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+            return Ok("Register Done");
+        }
+        //Insert new user (register)
+        [HttpPost]
+        [Route("facebook")]
+        public async Task<ActionResult<User>> InsertUser([FromServices] Context context, [FromBody] User user)
+        {
 
-            // var FacebookUser = await context.Users.FirstOrDefaultAsync(u => u.FacebookId == user.FacebookId);
-            // if (FacebookUser != null) { return BadRequest("Facebook Login");}
+            if (!ModelState.IsValid) { return BadRequest(ModelState); }
+
+            var FacebookUser = await context.Users.Where(u => u.FacebookId == user.FacebookId && u.FacebookId != null).Select(
+                u => new User {
+                    UserId = u.UserId,
+                    IsAdmin = u.IsAdmin,
+                    Avatar = u.Avatar
+                }
+            ).FirstOrDefaultAsync();
+            if (FacebookUser != null) { return FacebookUser ;}
 
             context.Users.Add(user);
             await context.SaveChangesAsync();
-            return Ok("Register done.");
+
+            FacebookUser = await context.Users.Where(u => u.FacebookId == user.FacebookId).Select(
+                u => new User {
+                    UserId = u.UserId,
+                    IsAdmin = u.IsAdmin,
+                    Avatar = u.Avatar
+                }
+            ).FirstOrDefaultAsync();
+            return FacebookUser;
         }
 
         //Update user profile
         [HttpPut]
         [Route("profile/{userId:int}")]
-        public async Task<ActionResult<User>> UpdateUser([FromServices] Context context, [FromBody] User user, int userId)
+        public async Task<ActionResult<User>> UpdateUser([FromBody] User user, int userId)
         {
             if (!ModelState.IsValid) { return BadRequest(ModelState); }
 
-            // Find the email from db, if it exists, return problem
-            var existingEmail = await context.Users.FirstOrDefaultAsync(u => u.Email == user.Email);
-            if (existingEmail != null && existingEmail.UserId != user.UserId) {
+            if (await _userService.IsEmailExist(user)) {
                 throw new Exception("Email Exist");
             }
 
-            var existingUser = await context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
-            if (existingUser != null)
-            {
-                existingUser.Email = user.Email;
-                existingUser.Gender = user.Gender;
-                existingUser.Fullname = user.Fullname;
-                await context.SaveChangesAsync();
+            if (await _userService.UpdateUserInfo(user, userId) != 0) {
                 return Ok();
             }
 
@@ -118,16 +117,12 @@ namespace Angeloid.Controllers
         //Update user avatar
         [HttpPut]
         [Route("avatar/{userId:int}")]
-        public async Task<ActionResult<User>> UpdateAvatar([FromServices] Context context, [FromBody] User user, int userId)
+        public async Task<ActionResult<User>> UpdateAvatar([FromBody] User user, int userId)
         {
             if (!ModelState.IsValid) { return BadRequest(ModelState); }
 
-            var existingUser = await context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
-            if (existingUser != null)
-            {
-                existingUser.Avatar = user.Avatar;
-                await context.SaveChangesAsync();
-                return Ok("Update done.");
+            if (await _userService.UpdateUserAvatar(user, userId) != 0) {
+                return Ok();
             }
 
             return NotFound();
@@ -136,40 +131,72 @@ namespace Angeloid.Controllers
         //Delete user
         [HttpDelete]
         [Route("{deleteUserid:int}")]
-        public async Task<ActionResult<User>> DeleteUser([FromServices] Context context, int deleteUserid)
+        public async Task<ActionResult<User>> DeleteUser(int deleteUserid)
         {
             if (!ModelState.IsValid) { return BadRequest(ModelState); }
 
-            var existingUser = await context.Users.FirstOrDefaultAsync(user => user.UserId == deleteUserid);
-            if (existingUser != null)
-            {
-                context.Remove(existingUser);
-                await context.SaveChangesAsync();
+            if (await _userService.DeleteUserById(deleteUserid) != 0) {
+                return Ok();
             }
-            else { return NotFound(); }
-            return Ok("Delete Done");
+
+            return NotFound();
         }
 
         //Update user password
         [HttpPut]
         [Route("password/{userId:int}")]
-        public async Task<ActionResult<User>> UpdatePassword([FromServices] Context context, [FromBody] UserPassword user, int userId)
+        public async Task<ActionResult<User>> UpdatePassword([FromBody] UserPassword user, int userId)
         {
             if (!ModelState.IsValid) { return BadRequest(ModelState); }
 
-            var existingUser = await context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
-            if (existingUser == null)
-            {
-                return NotFound();
-            }
-
-            if (existingUser.Password == user.OldPassword)
-            {
-                existingUser.Password = user.NewPassword;
-                await context.SaveChangesAsync();
-                return Ok("Update done.");
+            if (await _userService.UpdateUserPassword(user, userId) != 0) {
+                return Ok();
             }
             throw new Exception("Wrong Password!");
+        }
+
+        [HttpPost]
+        [Route("forgot")]
+        public async Task<ActionResult<User>> ForgotPassword([FromBody] User user)
+        {
+            var existingUser = await _userService.GetUserByEmail(user.Email);
+            //Check whether user Email exist or not
+            if (existingUser == null) {
+                return NotFound();
+            }
+           
+            //Create token & send email link
+            string guid = _tokenService.createToken(existingUser.UserId);
+            await _emailService.SendEmailAsync(existingUser.Email, guid);
+            return Ok();
+        }
+
+        [HttpPost]
+        [Route("token")]
+        public IActionResult VerifyToken([FromBody] Token token)
+        {
+            if (_tokenService.getUserIdByToken(token.TokenName) != 0) {
+                return Ok();
+            }
+            return NotFound();
+        }
+
+        //Reset user password
+        [HttpPut]
+        [Route("reset")]
+        public async Task<ActionResult<User>> ResetPassword([FromBody] UserPassword user)
+        {
+            if (!ModelState.IsValid) { return BadRequest(ModelState); }
+
+            int userId = _tokenService.getUserIdByToken(user.Token);
+            
+            if (await _userService.ResetUserPassword(user, userId) != 0) {
+                return Ok();
+            }
+
+            _tokenService.removeToken(userId);
+            
+            return NotFound();
         }
     }
 }
