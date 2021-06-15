@@ -14,6 +14,7 @@ using Angeloid.Models;
 
 //Cache
 using Microsoft.Extensions.Caching.Memory;
+using Newtonsoft.Json;
 
 namespace Angeloid.Controllers
 {
@@ -244,6 +245,40 @@ namespace Angeloid.Controllers
 
             return Ok(anime);
         }
+
+        //Get Anime By List Character Name
+        [HttpPost]
+        [Route("searchImage")]
+        public async Task<ActionResult<List<Character>>> GetAnimeByCharacterName([FromServices] Context context, [FromBody] CharacterName listCharacterName)
+        {
+            HashSet<string> animeSet = new HashSet<string>();
+            foreach (string characterName in listCharacterName.listCharacterName)
+            {
+                var anime = await context.Characters.
+                            Where(c => c.CharacterName == characterName)
+                            .Select(
+                                c => new Character
+                                {
+                                    Anime = new Anime
+                                    {
+                                        AnimeId = c.Anime.AnimeId,
+                                        AnimeName = c.Anime.AnimeName,
+                                        Thumbnail = c.Anime.Thumbnail
+                                    }
+                                }
+                            ).FirstOrDefaultAsync();
+                animeSet.Add(JsonConvert.SerializeObject(anime.Anime));
+            }
+            List<Anime> animeList = new List<Anime>();
+            foreach (string anime in animeSet)
+            {
+                animeList.Add(JsonConvert.DeserializeObject<Anime>(anime));
+            }
+            return Ok(animeList);
+        }
+
+
+
 
         //Insert new anime
         [HttpPost]
