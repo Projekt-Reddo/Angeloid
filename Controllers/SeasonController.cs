@@ -3,14 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-
-//Entity framework
-using Microsoft.EntityFrameworkCore;
 
 //DB objects
-using Angeloid.DataContext;
 using Angeloid.Models;
+using Angeloid.Services;
 
 namespace Angeloid.Controllers
 {
@@ -18,15 +14,17 @@ namespace Angeloid.Controllers
     [Route("api/season")]
     public class SeasonController : ControllerBase
     {
+        private readonly ISeasonService _seasonService;
+        public SeasonController(ISeasonService seasonService)
+        {
+            _seasonService = seasonService;
+        }
+
         [HttpGet]
         [Route("")]
-        public async Task<ActionResult<List<Season>>> ListAllSeason([FromServices] Context context)
+        public async Task<ActionResult<List<Season>>> ListAllSeason()
         {
-            var seasons = await context.Seasons
-                                            .OrderBy(x => x.Year)
-                                            .Select(x => x.Year)
-                                            .Distinct()
-                                            .ToListAsync();
+            var seasons = await _seasonService.ListAllSeasonYear();
 
             if (seasons == null) { return NotFound(); }
 

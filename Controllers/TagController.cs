@@ -3,14 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-
-//Entity framework
-using Microsoft.EntityFrameworkCore;
 
 //DB objects
-using Angeloid.DataContext;
 using Angeloid.Models;
+using Angeloid.Services;
 
 namespace Angeloid.Controllers
 {
@@ -18,18 +14,17 @@ namespace Angeloid.Controllers
     [Route("api/tag")]
     public class TagController : ControllerBase
     {
+        private readonly ITagService _tagService;
+        public TagController(ITagService tagService)
+        {
+            _tagService = tagService;
+        }
+        
         [HttpGet]
         [Route("")]
-        public async Task<ActionResult<List<Tag>>> ListAllTags([FromServices] Context context)
+        public async Task<ActionResult<List<Tag>>> ListAllTags()
         {
-            var tags = await (
-                from tag in context.Tags
-                select new Tag
-                {
-                    TagId = tag.TagId,
-                    TagName = tag.TagName
-                }
-            ).ToListAsync();
+            var tags = await _tagService.ListAllTags();
 
             if (tags == null) { return NotFound(); }
 
