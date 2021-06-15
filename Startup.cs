@@ -26,6 +26,9 @@ using System.Net;
 //Local services
 using Angeloid.Services;
 
+//Models
+using Angeloid.Models;
+
 namespace Angeloid
 {
     public class Startup
@@ -44,9 +47,28 @@ namespace Angeloid
             services.AddCors();
 
             //DB config
-            string connnectionString = Configuration.GetConnectionString("DefaultConnection");
-            services.AddDbContext<Context>(opt => opt.UseSqlServer(connnectionString));
+            string connectionString = Configuration.GetConnectionString("DefaultConnection");
+            services.AddDbContext<Context>(opt => opt.UseSqlServer(connectionString));
             services.AddScoped<Context, Context>();
+
+            //Add Email Service
+            var emailConfig = Configuration.GetSection("Email").Get<EmailConfig>();
+            string frontEndUrl = Configuration["FrontEndUrl"];
+            services.AddScoped<IEmailService>(sp => new EmailService(emailConfig, frontEndUrl));
+
+            //Add Token Service Singleton
+            services.AddSingleton<ITokenService, TokenService>();
+            
+            //Add Services to Scope
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<ILogInOutService, UserService>();
+            services.AddScoped<ITagService, TagService>();
+            services.AddScoped<IStudioService, StudioService>();
+            services.AddScoped<ISeiyuuService, SeiyuuService>();
+            services.AddScoped<ISeasonService, SeasonService>();
+            services.AddScoped<ICharacterService, CharacterService>();
+            services.AddScoped<IAnimeService, AnimeService>();
+            services.AddScoped<IHomePageService, AnimeService>();
 
             //JSON config
             services.AddControllers().AddNewtonsoftJson(options =>

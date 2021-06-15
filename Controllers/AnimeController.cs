@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 
 //Entity framework
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +10,9 @@ using Microsoft.EntityFrameworkCore;
 //DB objects
 using Angeloid.DataContext;
 using Angeloid.Models;
+
+//Services
+using Angeloid.Services;
 
 //Cache
 using Microsoft.Extensions.Caching.Memory;
@@ -23,204 +25,19 @@ namespace Angeloid.Controllers
     {
         //Declare for a Cache 
         private IMemoryCache _cache;
-        private readonly ILogger _logger;
-        public AnimeController(IMemoryCache memoryCache, ILogger<AnimeController> logger)
+        private readonly IAnimeService _animeService;
+        public AnimeController(IMemoryCache memoryCache, IAnimeService animeService)
         {
             _cache = memoryCache;
-            _logger = logger;
-        }
-
-        //Get anime in this season: First try to find data in cache 
-        //if not call query to db to get data and save to cache
-        [HttpGet]
-        [Route("thisseason")]
-        public async Task<ActionResult<List<Anime>>> ListThisSeasonAnime([FromServices] Context context)
-        {
-            //Get real time of server
-            DateTime thisSeason = DateTime.Today;
-            string thisSeasonName = Helper.getSeasonInText(thisSeason);
-
-            //Declare a return variable
-            var thisSeasonAnime = (ActionResult<List<Anime>>)null;
-
-            //Check if data is in Cache
-            bool AlreadyExistThisSeasonAnime = _cache.TryGetValue("CachedThisSeason", out thisSeasonAnime);
-
-            //If not call query to db 
-            if (!AlreadyExistThisSeasonAnime)
-            {
-                //Get 5 anime in this season
-                thisSeasonAnime = await (from anime in context.Animes
-                                         where anime.Season.SeasonName == thisSeasonName & anime.Season.Year == thisSeason.Year.ToString()
-                                         orderby anime.View descending
-                                         select new Anime
-                                         {
-                                             AnimeId = anime.AnimeId,
-                                             AnimeName = anime.AnimeName,
-                                             Thumbnail = anime.Thumbnail,
-                                             Episode = anime.Episode,
-                                             Studio = anime.Studio,
-                                             Tags = (from tag in anime.Tags
-                                                     orderby tag.TagId ascending
-                                                     select new Tag
-                                                     {
-                                                         TagId = tag.TagId,
-                                                         TagName = tag.TagName
-                                                     }).Take(3).ToList() //take only 3 tag
-                                         }).Take(5).ToListAsync(); //take only 5 anime
-
-                //Config cache setting
-                var cacheEntryOptions = new MemoryCacheEntryOptions()
-                                    .SetSize(20480)
-                                    .SetSlidingExpiration(TimeSpan.FromDays(10));
-
-                //Add value to cache
-                _cache.Set("CachedThisSeason", thisSeasonAnime, cacheEntryOptions);
-            }
-
-            if (thisSeasonAnime == null) { return NotFound(); }
-
-            return thisSeasonAnime;
-        }
-
-        //Get anime in next season: First try to find data in cache 
-        //if not call query to db to get data and save to cache
-        [HttpGet]
-        [Route("nextseason")]
-        public async Task<ActionResult<List<Anime>>> ListNextSeasonAnime([FromServices] Context context, int getAnimeId)
-        {
-            //Get next season time and name in text
-            DateTime nextSeason = DateTime.Today.AddMonths(3);
-            string nextSeasonName = Helper.getSeasonInText(nextSeason);
-
-            //Declare a return variable
-            var nextSeasonAnime = (ActionResult<List<Anime>>)null;
-
-            //Check if data is in Cache
-            bool AlreadyExistNextSeasonAnime = _cache.TryGetValue("CachedNextSeason", out nextSeasonAnime);
-
-            //If not call query to db 
-            if (!AlreadyExistNextSeasonAnime)
-            {
-                //Get 5 anime in next season
-                nextSeasonAnime = await (from anime in context.Animes
-                                         where anime.Season.SeasonName == nextSeasonName & anime.Season.Year == nextSeason.Year.ToString()
-                                         orderby anime.View descending
-                                         select new Anime
-                                         {
-                                             AnimeId = anime.AnimeId,
-                                             AnimeName = anime.AnimeName,
-                                             Thumbnail = anime.Thumbnail,
-                                             Episode = anime.Episode,
-                                             Studio = anime.Studio,
-                                             Tags = (from tag in anime.Tags
-                                                     orderby tag.TagId ascending
-                                                     select new Tag
-                                                     {
-                                                         TagId = tag.TagId,
-                                                         TagName = tag.TagName
-                                                     }).Take(3).ToList()
-                                         }).Take(5).ToListAsync();
-
-                //Config cache setting                
-                var cacheEntryOptions = new MemoryCacheEntryOptions()
-                                    .SetSize(20480)
-                                    .SetSlidingExpiration(TimeSpan.FromDays(10));
-
-                //Add value to cache
-                _cache.Set("CachedNextSeason", nextSeasonAnime, cacheEntryOptions);
-            }
-
-            if (nextSeasonAnime == null) { return NotFound(); }
-
-            return nextSeasonAnime;
-        }
-
-        //Get anime popular all time: First try to find data in cache 
-        //if not call query to db to get data and save to cache
-        [HttpGet]
-        [Route("alltimepopular")]
-        public async Task<ActionResult<List<Anime>>> ListAllTimePopularAnime([FromServices] Context context, int getAnimeId)
-        {
-            //Declare a return variable
-            var allTimePopularAnime = (ActionResult<List<Anime>>)null;
-
-            //Check if data is in Cache
-            bool AlreadyExistAllTimePopular = _cache.TryGetValue("CachedAllTimePopular", out allTimePopularAnime);
-
-            //If not call query to db
-            if (!AlreadyExistAllTimePopular)
-            {
-                //Get all time popular anime
-                allTimePopularAnime = await (from anime in context.Animes
-                                             orderby anime.View descending
-                                             select new Anime
-                                             {
-                                                 AnimeId = anime.AnimeId,
-                                                 AnimeName = anime.AnimeName,
-                                                 Thumbnail = anime.Thumbnail,
-                                                 Episode = anime.Episode,
-                                                 Studio = anime.Studio,
-                                                 Tags = (from tag in anime.Tags
-                                                         orderby tag.TagId ascending
-                                                         select new Tag
-                                                         {
-                                                             TagId = tag.TagId,
-                                                             TagName = tag.TagName
-                                                         }).Take(3).ToList()
-                                             }).Take(5).ToListAsync();
-
-                //Config cache setting
-                var cacheEntryOptions = new MemoryCacheEntryOptions()
-                                    .SetSize(20480)
-                                    .SetSlidingExpiration(TimeSpan.FromDays(10));
-
-                //Add value to cache
-                _cache.Set("CachedAllTimePopular", allTimePopularAnime, cacheEntryOptions);
-            }
-
-
-            if (allTimePopularAnime == null) { return NotFound(); }
-
-            return allTimePopularAnime;
+            _animeService = animeService;
         }
 
         //Get anime in the db
         [HttpGet]
         [Route("all")]
-        public async Task<ActionResult<List<Anime>>> ListAllAnime([FromServices] Context context, int getAnimeId)
+        public async Task<ActionResult<List<Anime>>> ListAllAnime()
         {
-            //Declare a return variable
-            var allAnime = (ActionResult<List<Anime>>)null;
-
-            //Check if data is in Cache
-            bool AlreadyExistAll = _cache.TryGetValue("CachedAllAnime", out allAnime);
-
-            //If not call query to db
-            if (!AlreadyExistAll)
-            {
-                //Get all time popular anime
-                allAnime = await (from anime in context.Animes
-                                  select new Anime
-                                  {
-                                      AnimeId = anime.AnimeId,
-                                      AnimeName = anime.AnimeName,
-                                      Status = anime.Status,
-                                      View = anime.View,
-                                      Thumbnail = anime.Thumbnail,
-                                      Episode = anime.Episode,
-                                      Studio = anime.Studio,
-                                  }).ToListAsync();
-
-                //Config cache setting
-                var cacheEntryOptions = new MemoryCacheEntryOptions()
-                                    .SetSize(40480)
-                                    .SetSlidingExpiration(TimeSpan.FromDays(10));
-
-                //Add value to cache
-                _cache.Set("CachedAllAnime", allAnime, cacheEntryOptions);
-            }
-
+            var allAnime = await _animeService.ListAllAnime();
 
             if (allAnime == null) { return NotFound(); }
 
@@ -248,118 +65,13 @@ namespace Angeloid.Controllers
         //Insert new anime
         [HttpPost]
         [Route("")]
-        public async Task<ActionResult<Anime>> InsertAnime([FromServices] Context context, [FromBody] Anime inputAnime)
+        public async Task<ActionResult<Anime>> InsertAnime([FromBody] Anime inputAnime)
         {
             if (!ModelState.IsValid) { return BadRequest(ModelState); }
 
-            //Check if input anime is exist or not
-            var existedAnime = await (from anime in context.Animes
-                                      where anime.AnimeName == inputAnime.AnimeName
-                                      select new Anime
-                                      {
-                                          AnimeId = anime.AnimeId
-                                      }).FirstOrDefaultAsync();
+            if (await _animeService.isExistByAnimeName(inputAnime) != 0) { return Conflict(); }
 
-            if (existedAnime != null) { return Conflict(); }
-
-            //Get characters from inputAnime and set inputAnime Characters to null
-            var inputCharacters = (from ch in inputAnime.Characters
-                                   select new Character
-                                   {
-                                       CharacterName = ch.CharacterName,
-                                       CharacterRole = ch.CharacterRole,
-                                       CharacterImage = ch.CharacterImage,
-                                       Seiyuu = ch.Seiyuu
-                                   }).ToList();
-            inputAnime.Characters = null;
-
-            //Get tags from input anime and set inputAnim Tags to null
-            var inputTags = (from tg in inputAnime.Tags
-                             select new Tag
-                             {
-                                 TagId = tg.TagId
-                             }).ToList();
-            inputAnime.Tags = null;
-
-            //Get season id 
-            var inputSeason = inputAnime.Season;
-            var dbSeason = (from season in context.Seasons
-                            where season.SeasonName == inputSeason.SeasonName && season.Year == inputSeason.Year
-                            select new Season
-                            {
-                                SeasonId = season.SeasonId
-                            }).FirstOrDefault();
-            inputAnime.Season = null;
-            inputAnime.SeasonId = dbSeason.SeasonId;
-
-            //Add anime to db
-            context.Animes.Add(inputAnime);
-            await context.SaveChangesAsync();
-
-            var dbAnime = await (from anime in context.Animes
-                                 where anime.AnimeName == inputAnime.AnimeName
-                                 select new Anime
-                                 {
-                                     AnimeId = anime.AnimeId
-                                 }).FirstOrDefaultAsync();
-
-            // insert characters and seiyuu info
-            foreach (var character in inputCharacters)
-            {
-                //check Seiyuu is existed or not
-                var existSeiyuu = await context.Seiyuus
-                            .FirstOrDefaultAsync(se => se.SeiyuuName == character.Seiyuu.SeiyuuName);
-
-                // if seiyuu is not exist in db -> insert (new seiyuu)
-                if (existSeiyuu == null)
-                {
-                    // add new seiyuu in db
-                    context.Seiyuus.Add(
-                        new Seiyuu
-                        {
-                            SeiyuuName = character.Seiyuu.SeiyuuName,
-                            SeiyuuImage = character.Seiyuu.SeiyuuImage
-                        }
-                    );
-                    await context.SaveChangesAsync();
-                }
-
-                //Get seiyuuId from inserted seiyuu
-                var dbSeiyuu = await (from se in context.Seiyuus
-                                      where se.SeiyuuName == character.Seiyuu.SeiyuuName
-                                      select new Seiyuu
-                                      {
-                                          SeiyuuId = se.SeiyuuId
-                                      }).FirstOrDefaultAsync();
-
-                // add new character to db
-                context.Characters.Add(
-                    new Character
-                    {
-                        CharacterName = character.CharacterName,
-                        CharacterRole = character.CharacterRole,
-                        CharacterImage = character.CharacterImage,
-                        AnimeId = dbAnime.AnimeId,
-                        SeiyuuId = dbSeiyuu.SeiyuuId
-                    }
-                );
-                await context.SaveChangesAsync();
-            }
-
-            // insert tagId and animeId to maptable AnimeTag
-            foreach (var tag in inputTags)
-            {
-                context.AnimeTags.Add(
-                    new AnimeTag
-                    {
-                        AnimeId = dbAnime.AnimeId,
-                        TagId = tag.TagId
-                    }
-                );
-
-                await context.SaveChangesAsync();
-            }
-
+            int rowInserted = await _animeService.InsertAnime(inputAnime);
 
             return Ok(new { message = "Add done" });
         }
@@ -430,11 +142,10 @@ namespace Angeloid.Controllers
             // Lấy season từ db
             var dbSeason = (from season in context.Seasons
                             where season.SeasonName == updateAnime.Season.SeasonName && season.Year == updateAnime.Season.Year
-                            select new Season {
+                            select new Season
+                            {
                                 SeasonId = season.SeasonId
                             }).FirstOrDefault();
-
-
 
             // 2.nếu có anime thì update:
             if (dbAnime != null)
@@ -454,14 +165,12 @@ namespace Angeloid.Controllers
                 var updateCharactes = (from ch in updateAnime.Characters
                                        select new Character
                                        {
+                                           CharacterId = ch.CharacterId,
                                            CharacterName = ch.CharacterName,
                                            CharacterRole = ch.CharacterRole,
                                            CharacterImage = ch.CharacterImage,
                                            Seiyuu = ch.Seiyuu
                                        }).ToList();
-
-                // if (!Util.isTheSameChar(dbCharacters, updateCharactes))
-                // {
 
                 // 2.1.3: remove all chacter's AnimeId foreign key
                 context.Characters
@@ -473,12 +182,12 @@ namespace Angeloid.Controllers
                 // 2.1.4: update characters and seiyuu info
                 foreach (var character in updateCharactes)
                 {
+                    // get existed Character by update anime chars id
                     var existChar = await context.Characters
-                                .FirstOrDefaultAsync(ch => ch.CharacterName == character.CharacterName);
+                                .FirstOrDefaultAsync(ch => ch.CharacterId == character.CharacterId);
 
                     var existSeiyuu = await context.Seiyuus
                                 .FirstOrDefaultAsync(se => se.SeiyuuName == character.Seiyuu.SeiyuuName);
-
 
                     /// if seiyuu is not exist in db -> insert (new seiyuu)
                     if (existSeiyuu == null)
@@ -491,6 +200,12 @@ namespace Angeloid.Controllers
                                 SeiyuuImage = character.Seiyuu.SeiyuuImage
                             }
                         );
+                        await context.SaveChangesAsync();
+                    }
+                    else
+                    {// update dbseiyuu information
+                        existSeiyuu.SeiyuuName = character.Seiyuu.SeiyuuName;
+                        existSeiyuu.SeiyuuImage = character.Seiyuu.SeiyuuImage;
                         await context.SaveChangesAsync();
                     }
 
@@ -528,17 +243,19 @@ namespace Angeloid.Controllers
                                               }).FirstOrDefaultAsync();
                         // change animeId to updateAnimeId
                         context.Characters
-                        .Where(ch => ch.CharacterName == character.CharacterName)
+                        .Where(ch => ch.CharacterId == character.CharacterId)
                         .ToList()
                         .ForEach(ch =>
                         {
                             ch.AnimeId = updateAnimeId;
+                            ch.CharacterName = character.CharacterName;
+                            ch.CharacterImage = character.CharacterImage;
+                            ch.CharacterRole = character.CharacterRole;
                             ch.SeiyuuId = dbSeiyuu.SeiyuuId;
                         });
                         await context.SaveChangesAsync();
                     }
                 }
-                // }
 
                 // update tags
                 var tags = await context.AnimeTags
@@ -587,15 +304,15 @@ namespace Angeloid.Controllers
                 }
 
                 // update studio id
-                if (dbAnime.StudioId != updateAnime.Studio.StudioId)
+                if (dbAnime.StudioId != updateAnime.StudioId)
                 {
 
-                    contextAnime.StudioId = updateAnime.Studio.StudioId;
+                    contextAnime.StudioId = updateAnime.StudioId;
                 }
                 // update season id
                 // if updated season id is equals dbAnime season id
                 if (dbAnime.SeasonId != dbSeason.SeasonId)
-                {   
+                {
                     contextAnime.SeasonId = dbSeason.SeasonId;
                 }
 
