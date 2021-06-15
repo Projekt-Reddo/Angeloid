@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 //DB objects
 using Angeloid.DataContext;
 using Angeloid.Models;
+using Angeloid.Services;
 
 namespace Angeloid.Controllers
 {
@@ -18,14 +19,16 @@ namespace Angeloid.Controllers
     [Route("api/thread/")]
     public class ThreadController : ControllerBase
     {
+        private readonly IThreadService _threadService;
+        public ThreadController(IThreadService threadService)
+        {
+            _threadService = threadService;
+        }
         [HttpGet]
         [Route("startup")]
         public async Task<ActionResult<List<Thread>>> ListThreadsFirst([FromServices] Context context)
         {
-            var threads = await context.Threads
-                                            .OrderByDescending(t=>t.ThreadId)
-                                            .Take(10)
-                                            .ToListAsync();
+            var threads = await _threadService.ListThreadFirst();
 
             if (threads == null) { return NotFound(); }
 
@@ -35,12 +38,7 @@ namespace Angeloid.Controllers
         [Route("load/{loadId:int}")]
         public async Task<ActionResult<List<Thread>>> LoadMore([FromServices] Context context, int loadId)
         {
-            var threads = await (
-                from t in context.Threads
-                where t.ThreadId<=loadId-10  && t.ThreadId>loadId-20
-                orderby t.ThreadId descending
-                select t
-            ).ToListAsync();
+            var threads = await _threadService.LoadMore(loadId);
 
             if (threads == null) { return NotFound(); }
 
