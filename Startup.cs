@@ -47,8 +47,8 @@ namespace Angeloid
             services.AddCors();
 
             //DB config
-            string connnectionString = Configuration.GetConnectionString("DefaultConnection");
-            services.AddDbContext<Context>(opt => opt.UseSqlServer(connnectionString));
+            string connectionString = Configuration.GetConnectionString("DefaultConnection");
+            services.AddDbContext<Context>(opt => opt.UseSqlServer(connectionString));
             services.AddScoped<Context, Context>();
 
             //Add Email Service
@@ -61,6 +61,14 @@ namespace Angeloid
             
             //Add Services to Scope
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<ILogInOutService, UserService>();
+            services.AddScoped<ITagService, TagService>();
+            services.AddScoped<IStudioService, StudioService>();
+            services.AddScoped<ISeiyuuService, SeiyuuService>();
+            services.AddScoped<ISeasonService, SeasonService>();
+            services.AddScoped<ICharacterService, CharacterService>();
+            services.AddScoped<IAnimeService, AnimeService>();
+            services.AddScoped<IHomePageService, AnimeService>();
 
             //JSON config
             services.AddControllers().AddNewtonsoftJson(options =>

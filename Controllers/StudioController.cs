@@ -3,14 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-
-//Entity framework
-using Microsoft.EntityFrameworkCore;
 
 //DB objects
-using Angeloid.DataContext;
 using Angeloid.Models;
+using Angeloid.Services;
 
 namespace Angeloid.Controllers
 {
@@ -18,19 +14,17 @@ namespace Angeloid.Controllers
     [Route("api/studio")]
     public class StudioController : ControllerBase
     {
+        private readonly IStudioService _studioService;
+        public StudioController(IStudioService studioService)
+        {
+            _studioService = studioService;
+        }
+
         [HttpGet]
         [Route("")]
-        public async Task<ActionResult<List<Studio>>> ListAllStudio([FromServices] Context context)
+        public async Task<ActionResult<List<Studio>>> ListAllStudio()
         {
-            var studios = await (
-                from studio in context.Studios
-                where studio.StudioName != ""
-                select new Studio
-                {
-                    StudioId = studio.StudioId,
-                    StudioName = studio.StudioName
-                }
-            ).ToListAsync();
+            var studios = await _studioService.ListAllStudio();
 
             if (studios == null) { return NotFound(); }
 

@@ -12,7 +12,7 @@ using Angeloid.Models;
 
 namespace Angeloid.Services
 {
-    public class UserService : IUserService
+    public class UserService : IUserService, ILogInOutService
     {
         private Context _context;
         public UserService(Context context)
@@ -139,6 +139,16 @@ namespace Angeloid.Services
             existingUser.Password = user.NewPassword;
             var rs = await _context.SaveChangesAsync();
             return rs;
+        }
+
+        public Task<User> Login(User user)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<User> Logout(User user)
+        {
+            throw new NotImplementedException();
         }
     }
 }
