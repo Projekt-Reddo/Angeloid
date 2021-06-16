@@ -3,11 +3,13 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 //Models
 using Angeloid.Models;
 using Angeloid.DataContext;
 using Angeloid.Controllers;
+
 
 namespace Angeloid.Services
 {
@@ -17,8 +19,8 @@ namespace Angeloid.Services
         private ISeasonService _seasonService;
         private ICharacterService _characterService;
         private ITagService _tagService;
-        public AnimeService(Context context, 
-                    ISeasonService seasonService, 
+        public AnimeService(Context context,
+                    ISeasonService seasonService,
                     ICharacterService characterService,
                     ITagService tagService
         )
@@ -27,16 +29,81 @@ namespace Angeloid.Services
             _seasonService = seasonService;
             _characterService = characterService;
             _tagService = tagService;
-        } 
+        }
 
         public Task<int> DeleteAnime(int animeId)
         {
             throw new System.NotImplementedException();
         }
 
-        public Task<Anime> GetAnimes(int animeId)
+        // Get an Anime By Anime Id
+        public async Task<Anime> GetAnime(int animeId)
         {
-            throw new System.NotImplementedException();
+            var anime = await _context.Animes
+                                    .Where(anime => anime.AnimeId == animeId)
+                                    .Select(
+                                        anime => new Anime
+                                        {
+                                            AnimeId = anime.AnimeId,
+                                            AnimeName = anime.AnimeName,
+                                            Content = anime.Content,
+                                            Thumbnail = anime.Thumbnail,
+                                            Status = anime.Status,
+                                            Wallpaper = anime.Wallpaper,
+                                            Trailer = anime.Trailer,
+                                            View = anime.View,
+                                            EpisodeDuration = anime.EpisodeDuration,
+                                            Episode = anime.Episode,
+                                            StartDay = anime.StartDay,
+                                            Web = anime.Web,
+                                            Characters = (from character in anime.Characters
+                                                          select new Character
+                                                          {
+                                                              CharacterId = character.CharacterId,
+                                                              CharacterName = character.CharacterName,
+                                                              CharacterRole = character.CharacterRole,
+                                                              CharacterImage = character.CharacterImage,
+                                                              Seiyuu = character.Seiyuu
+                                                          }
+                                            ).ToList(),
+                                            Season = anime.Season,
+                                            Studio = anime.Studio,
+                                            Tags = anime.Tags,
+                                        }
+                                    ).FirstOrDefaultAsync();
+            return anime;
+        }
+
+        // Get List Anime by Characters Name was detected by AI
+        public async Task<List<Anime>> GetAnimesByCharacterName(CharacterName listCharacterName)
+        {
+            HashSet<string> animeSet = new HashSet<string>();
+            
+            foreach (string characterName in listCharacterName.listCharacterName)
+            {
+                var anime = await _context.Characters.
+                            Where(c => c.CharacterName == characterName)
+                            .Select(
+                                c => new Character
+                                {
+                                    Anime = new Anime
+                                    {
+                                        AnimeId = c.Anime.AnimeId,
+                                        AnimeName = c.Anime.AnimeName,
+                                        Thumbnail = c.Anime.Thumbnail
+                                    }
+                                }
+                            ).FirstOrDefaultAsync();
+                animeSet.Add(JsonConvert.SerializeObject(anime.Anime));
+            }
+
+            List<Anime> animeList = new List<Anime>();
+            foreach (string anime in animeSet)
+            {
+                animeList.Add(JsonConvert.DeserializeObject<Anime>(anime));
+            }
+
+            return animeList;
         }
 
         public async Task<int> InsertAnime(Anime inputAnime)
@@ -75,17 +142,17 @@ namespace Angeloid.Services
         public async Task<List<Anime>> ListAllAnime()
         {
             //Get all anime
-            var allAnime = await(from anime in _context.Animes
-                            select new Anime
-                            {
-                                AnimeId = anime.AnimeId,
-                                AnimeName = anime.AnimeName,
-                                Status = anime.Status,
-                                View = anime.View,
-                                Thumbnail = anime.Thumbnail,
-                                Episode = anime.Episode,
-                                Studio = anime.Studio,
-                            }).ToListAsync();
+            var allAnime = await (from anime in _context.Animes
+                                  select new Anime
+                                  {
+                                      AnimeId = anime.AnimeId,
+                                      AnimeName = anime.AnimeName,
+                                      Status = anime.Status,
+                                      View = anime.View,
+                                      Thumbnail = anime.Thumbnail,
+                                      Episode = anime.Episode,
+                                      Studio = anime.Studio,
+                                  }).ToListAsync();
 
             return allAnime;
         }
@@ -93,24 +160,24 @@ namespace Angeloid.Services
         public async Task<List<Anime>> ListAllTimePopularAnime()
         {
             //Get all time popular anime
-            var allTimePopularAnime = await(from anime in _context.Animes
-                                            orderby anime.View descending
-                                            select new Anime
-                                            {
-                                                AnimeId = anime.AnimeId,
-                                                AnimeName = anime.AnimeName,
-                                                Thumbnail = anime.Thumbnail,
-                                                Episode = anime.Episode,
-                                                Studio = anime.Studio,
-                                                Tags = (from tag in anime.Tags
-                                                        orderby tag.TagId ascending
-                                                        select new Tag
-                                                        {
-                                                            TagId = tag.TagId,
-                                                            TagName = tag.TagName
-                                                        }).Take(3).ToList()
-                                            }).Take(5).ToListAsync();
-        
+            var allTimePopularAnime = await (from anime in _context.Animes
+                                             orderby anime.View descending
+                                             select new Anime
+                                             {
+                                                 AnimeId = anime.AnimeId,
+                                                 AnimeName = anime.AnimeName,
+                                                 Thumbnail = anime.Thumbnail,
+                                                 Episode = anime.Episode,
+                                                 Studio = anime.Studio,
+                                                 Tags = (from tag in anime.Tags
+                                                         orderby tag.TagId ascending
+                                                         select new Tag
+                                                         {
+                                                             TagId = tag.TagId,
+                                                             TagName = tag.TagName
+                                                         }).Take(3).ToList()
+                                             }).Take(5).ToListAsync();
+
             return allTimePopularAnime;
         }
 
@@ -121,25 +188,25 @@ namespace Angeloid.Services
             string nextSeasonName = Helper.getSeasonInText(nextSeason);
 
             //Get 5 anime in next season
-            var nextSeasonAnime = await(from anime in _context.Animes
-                                    where anime.Season.SeasonName == nextSeasonName & anime.Season.Year == nextSeason.Year.ToString()
-                                    orderby anime.View descending
-                                    select new Anime
-                                    {
-                                        AnimeId = anime.AnimeId,
-                                        AnimeName = anime.AnimeName,
-                                        Thumbnail = anime.Thumbnail,
-                                        Episode = anime.Episode,
-                                        Studio = anime.Studio,
-                                        Tags = (from tag in anime.Tags
-                                                orderby tag.TagId ascending
-                                                select new Tag
-                                                {
-                                                    TagId = tag.TagId,
-                                                    TagName = tag.TagName
-                                                }).Take(3).ToList()
-                                    }).Take(5).ToListAsync();
-        
+            var nextSeasonAnime = await (from anime in _context.Animes
+                                         where anime.Season.SeasonName == nextSeasonName & anime.Season.Year == nextSeason.Year.ToString()
+                                         orderby anime.View descending
+                                         select new Anime
+                                         {
+                                             AnimeId = anime.AnimeId,
+                                             AnimeName = anime.AnimeName,
+                                             Thumbnail = anime.Thumbnail,
+                                             Episode = anime.Episode,
+                                             Studio = anime.Studio,
+                                             Tags = (from tag in anime.Tags
+                                                     orderby tag.TagId ascending
+                                                     select new Tag
+                                                     {
+                                                         TagId = tag.TagId,
+                                                         TagName = tag.TagName
+                                                     }).Take(3).ToList()
+                                         }).Take(5).ToListAsync();
+
             return nextSeasonAnime;
         }
 
@@ -150,24 +217,24 @@ namespace Angeloid.Services
             string thisSeasonName = Helper.getSeasonInText(thisSeason);
 
             //Get 5 anime in this season
-            var thisSeasonAnime = await(from anime in _context.Animes
-                                    where anime.Season.SeasonName == thisSeasonName & anime.Season.Year == thisSeason.Year.ToString()
-                                    orderby anime.View descending
-                                    select new Anime
-                                    {
-                                        AnimeId = anime.AnimeId,
-                                        AnimeName = anime.AnimeName,
-                                        Thumbnail = anime.Thumbnail,
-                                        Episode = anime.Episode,
-                                        Studio = anime.Studio,
-                                        Tags = (from tag in anime.Tags
-                                                orderby tag.TagId ascending
-                                                select new Tag
-                                                {
-                                                    TagId = tag.TagId,
-                                                    TagName = tag.TagName
-                                                }).Take(3).ToList() //take only 3 tag
-                                    }).Take(5).ToListAsync(); //take only 5 anime
+            var thisSeasonAnime = await (from anime in _context.Animes
+                                         where anime.Season.SeasonName == thisSeasonName & anime.Season.Year == thisSeason.Year.ToString()
+                                         orderby anime.View descending
+                                         select new Anime
+                                         {
+                                             AnimeId = anime.AnimeId,
+                                             AnimeName = anime.AnimeName,
+                                             Thumbnail = anime.Thumbnail,
+                                             Episode = anime.Episode,
+                                             Studio = anime.Studio,
+                                             Tags = (from tag in anime.Tags
+                                                     orderby tag.TagId ascending
+                                                     select new Tag
+                                                     {
+                                                         TagId = tag.TagId,
+                                                         TagName = tag.TagName
+                                                     }).Take(3).ToList() //take only 3 tag
+                                         }).Take(5).ToListAsync(); //take only 5 anime
 
             return thisSeasonAnime;
         }
@@ -179,16 +246,17 @@ namespace Angeloid.Services
 
         //Check if an anime is exited or not
         //If exist return it's id else return 0;
-        public async Task<int> isExistByAnimeName(Anime anime) {
+        public async Task<int> isExistByAnimeName(Anime anime)
+        {
             var existedAnime = await (from ani in _context.Animes
-                                        where ani.AnimeName == anime.AnimeName
-                                        select new Anime
-                                        {
-                                            AnimeId = anime.AnimeId
-                                        }).FirstOrDefaultAsync();
-            
+                                      where ani.AnimeName == anime.AnimeName
+                                      select new Anime
+                                      {
+                                          AnimeId = anime.AnimeId
+                                      }).FirstOrDefaultAsync();
+
             if (existedAnime != null) return existedAnime.AnimeId;
-            
+
             return 0;
         }
     }

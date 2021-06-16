@@ -174,9 +174,19 @@ namespace Angeloid.Services
             return rowInserted;
         }
 
-        public Task<User> Login(User user)
+        public async Task<User> Login(User user)
         {
-            throw new NotImplementedException();
+            var _user = await _context.Users
+                        .Where(u => u.UserName == user.UserName && u.Password == user.Password)
+                        .Select(
+                            u => new User
+                            {
+                                UserId = u.UserId,
+                                Avatar = u.Avatar,
+                                IsAdmin = u.IsAdmin
+                            }
+                        ).FirstOrDefaultAsync();
+            return _user;
         }
 
         public async Task<User> FacebookLogin(User user)
@@ -194,7 +204,7 @@ namespace Angeloid.Services
 
         public Task<User> Logout(User user)
         {
-            throw new NotImplementedException();
+            return null;
         }
     }
 }
