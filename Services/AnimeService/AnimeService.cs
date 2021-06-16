@@ -67,6 +67,8 @@ namespace Angeloid.Services
                                                           }
                                             ).ToList(),
                                             Season = anime.Season,
+                                            SeasonId = anime.SeasonId,
+                                            StudioId = anime.StudioId,
                                             Studio = anime.Studio,
                                             Tags = anime.Tags,
                                         }
