@@ -8,5 +8,6 @@ namespace Angeloid.Services
     {
         Task<List<Thread>> ListThreadFirst();
         Task<List<Thread>> LoadMore(int loadId);
+        Task<int> AddNewThread(Thread thread);
     }
 }

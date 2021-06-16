@@ -51,17 +51,16 @@ namespace Angeloid.Controllers
             if (user != null) { return Ok(user); }
             return NotFound();
         }
+        //Insert new user (register)
         [HttpPost]
         [Route("")]
         public async Task<ActionResult<User>> Register([FromBody] User user)
         {
             if (!ModelState.IsValid) { return BadRequest(ModelState); }
-            if (await _userService.Register(user) != 0) { return Conflict(); }
+            if (await _userService.Register(user) == 0) { return Conflict(); }
             int rowInserted = await _userService.Register(user);
             return Ok(new { message = "Register Done" });
         }
-        //Insert new user (register)
-
         [HttpPost]
         [Route("facebook")]
         public async Task<ActionResult<User>> FacebookLogin([FromBody] User user)

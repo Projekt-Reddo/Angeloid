@@ -11,7 +11,7 @@ namespace Angeloid.Models
         public byte[] Image { get; set; }
 
         // Relationship to User
-        [IgnoreDataMember]
+        // [IgnoreDataMember]
         public int UserId { get; set; }
         public User User { get; set; }
     }

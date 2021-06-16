@@ -33,5 +33,13 @@ namespace Angeloid.Services
                             .ToListAsync();
             return threads;
         }
+        public async Task<int> AddNewThread(Thread thread)
+        {
+            var rowInserted = 0;
+            _context.Threads.Add(thread);
+            rowInserted += await _context.SaveChangesAsync();
+            return rowInserted;
+        }
+
     }
 }
