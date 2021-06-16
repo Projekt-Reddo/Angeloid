@@ -12,5 +12,7 @@ namespace Angeloid.Services
         Task<int> insertCharacter(Character character, int AnimeId, int SeiyuuId);
         Task<int> insertListCharacter(List<Character> inputCharacters, int AnimeId);
         Task<List<Character>> getCharacterListFromAnime(Anime anime);
+        Task<int> removeAnimeFK(int animeId);
+        Task<int> updateCharacter(List<Character> characters, int animeId);
     }
 }
