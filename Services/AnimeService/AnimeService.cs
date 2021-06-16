@@ -3,11 +3,13 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 //Models
 using Angeloid.Models;
 using Angeloid.DataContext;
 using Angeloid.Controllers;
+
 
 namespace Angeloid.Services
 {
@@ -34,9 +36,74 @@ namespace Angeloid.Services
             throw new System.NotImplementedException();
         }
 
-        public Task<Anime> GetAnimes(int animeId)
+        // Get an Anime By Anime Id
+        public async Task<Anime> GetAnime(int animeId)
         {
-            throw new System.NotImplementedException();
+            var anime = await _context.Animes
+                                    .Where(anime => anime.AnimeId == animeId)
+                                    .Select(
+                                        anime => new Anime
+                                        {
+                                            AnimeId = anime.AnimeId,
+                                            AnimeName = anime.AnimeName,
+                                            Content = anime.Content,
+                                            Thumbnail = anime.Thumbnail,
+                                            Status = anime.Status,
+                                            Wallpaper = anime.Wallpaper,
+                                            Trailer = anime.Trailer,
+                                            View = anime.View,
+                                            EpisodeDuration = anime.EpisodeDuration,
+                                            Episode = anime.Episode,
+                                            StartDay = anime.StartDay,
+                                            Web = anime.Web,
+                                            Characters = (from character in anime.Characters
+                                                          select new Character
+                                                          {
+                                                              CharacterId = character.CharacterId,
+                                                              CharacterName = character.CharacterName,
+                                                              CharacterRole = character.CharacterRole,
+                                                              CharacterImage = character.CharacterImage,
+                                                              Seiyuu = character.Seiyuu
+                                                          }
+                                            ).ToList(),
+                                            Season = anime.Season,
+                                            Studio = anime.Studio,
+                                            Tags = anime.Tags,
+                                        }
+                                    ).FirstOrDefaultAsync();
+            return anime;
+        }
+
+        // Get List Anime by Characters Name was detected by AI
+        public async Task<List<Anime>> GetAnimesByCharacterName(CharacterName listCharacterName)
+        {
+            HashSet<string> animeSet = new HashSet<string>();
+            
+            foreach (string characterName in listCharacterName.listCharacterName)
+            {
+                var anime = await _context.Characters.
+                            Where(c => c.CharacterName == characterName)
+                            .Select(
+                                c => new Character
+                                {
+                                    Anime = new Anime
+                                    {
+                                        AnimeId = c.Anime.AnimeId,
+                                        AnimeName = c.Anime.AnimeName,
+                                        Thumbnail = c.Anime.Thumbnail
+                                    }
+                                }
+                            ).FirstOrDefaultAsync();
+                animeSet.Add(JsonConvert.SerializeObject(anime.Anime));
+            }
+
+            List<Anime> animeList = new List<Anime>();
+            foreach (string anime in animeSet)
+            {
+                animeList.Add(JsonConvert.DeserializeObject<Anime>(anime));
+            }
+
+            return animeList;
         }
 
         public async Task<int> InsertAnime(Anime inputAnime)
