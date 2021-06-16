@@ -44,5 +44,13 @@ namespace Angeloid.Controllers
 
             return Ok(threads);
         }
+        [HttpPost]
+        [Route("")]
+        public async Task<ActionResult<Thread>> AddnewThread([FromBody] Thread thread)      
+        {
+            if (!ModelState.IsValid) { return BadRequest(ModelState); }
+            await _threadService.AddNewThread(thread);
+            return Ok(new { message = "Add Thread Done" });
+        } 
     }
 }
