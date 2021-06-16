@@ -44,22 +44,29 @@ namespace Angeloid.Controllers
             return allAnime;
         }
 
-        //Get an anime info
+        //Get an Anime by Anime Id 
         [HttpGet]
         [Route("{getAnimeId:int}")]
-        public async Task<ActionResult<List<Anime>>> GetAnime([FromServices] Context context, int getAnimeId)
+        public async Task<ActionResult<Anime>> GetAnime(int getAnimeId)
         {
-            var anime = await context.Animes
-                                        .Where(a => a.AnimeId == getAnimeId)
-                                        .Include(t => t.Tags)
-                                        .Include(s => s.Season)
-                                        .Include(s => s.Studio)
-                                        .Include(c => c.Characters).ThenInclude(s => s.Seiyuu)
-                                        .FirstOrDefaultAsync(a => a.AnimeId == getAnimeId);
+            var anime = await _animeService.GetAnime(getAnimeId);
 
             if (anime == null) { return NotFound(); }
 
-            return Ok(anime);
+            return anime;
+        }
+
+        //Get Anime By List Character Name
+        [HttpPost]
+        [Route("searchImage")]
+        public async Task<ActionResult<List<Anime>>> GetAnimesByCharacterName([FromBody] CharacterName listCharacterName)
+        {
+
+            List<Anime> animeList = await _animeService.GetAnimesByCharacterName(listCharacterName);
+
+            if (animeList == null) { return NotFound(); }
+
+            return animeList;
         }
 
         //Insert new anime
