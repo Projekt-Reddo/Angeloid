@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 //DB objects
 using Angeloid.DataContext;
 using Angeloid.Models;
+using Angeloid.Services;
 
 namespace Angeloid.Controllers
 {
@@ -18,27 +19,24 @@ namespace Angeloid.Controllers
     [Route("api/loginout")]
     public class LogInOutController : ControllerBase
     {
-        
-      //Login
+        private readonly ILogInOutService _userService;
+        public LogInOutController(ILogInOutService userService)
+        {
+            _userService = userService;
+        }
+
+        //Login
         [HttpPost]
         [Route("")]
-        public async Task<ActionResult<User>> Login([FromServices] Context context, [FromBody] User user)
+        public async Task<ActionResult<User>> Login([FromBody] User user)
         {
             // Allow Cors
             Response.Headers.Add("Access-Control-Allow-Origin", "*");
             // Check if model valid
             if (!ModelState.IsValid) { return BadRequest(ModelState); }
-            
-            var _user = await context.Users
-                        .Where(u=> u.UserName==user.UserName && u.Password==user.Password)
-                        .Select(
-                            u=>new User{
-                                UserId=u.UserId,
-                                Avatar=u.Avatar,
-                                IsAdmin=u.IsAdmin
-                            }
-                        ).FirstOrDefaultAsync();
-            
+
+            var _user = await _userService.Login(user);
+
             if (_user != null)
             {
                 return Ok(_user);
@@ -49,7 +47,7 @@ namespace Angeloid.Controllers
         //Logout
         [HttpGet]
         [Route("{userid:int}")]
-        public async Task<ActionResult<List<Anime>>> Logout([FromServices] Context context, int userId)
+        public async Task<ActionResult<User>> Logout([FromServices] Context context, int userId)
         {
             return Ok("Logout success");
         }

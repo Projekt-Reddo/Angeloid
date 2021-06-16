@@ -313,7 +313,6 @@ namespace Angeloid.Controllers
                 // update studio id
                 if (dbAnime.StudioId != updateAnime.StudioId)
                 {
-
                     contextAnime.StudioId = updateAnime.StudioId;
                 }
                 // update season id
