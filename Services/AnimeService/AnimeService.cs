@@ -67,6 +67,8 @@ namespace Angeloid.Services
                                                           }
                                             ).ToList(),
                                             Season = anime.Season,
+                                            SeasonId = anime.SeasonId,
+                                            StudioId = anime.StudioId,
                                             Studio = anime.Studio,
                                             Tags = anime.Tags,
                                         }
@@ -239,9 +241,104 @@ namespace Angeloid.Services
             return thisSeasonAnime;
         }
 
-        public Task<int> UpdateAnime(Anime anime, int animeId)
+        public async Task<int> UpdateAnime(Anime anime, int animeId)
         {
-            throw new System.NotImplementedException();
+            var rowsAffected = 0;
+            var existAnime = await isExistByAnimeId(animeId);
+            /*
+                1. get existedAnime in database by animeId
+                2. update season by modified anime season.
+                3. update characters:
+                    3.1: remove all animeId fk of characters in existedAnime
+                    3.2: update characters + related seiyuu.
+                4. update tags:
+                    4.1: remove all animeTags rows in intermediate table (entity) AnimeTags
+                    4.2: add new AnimeTags
+                5. update others:
+                    5.1: name
+                    5.2: studio
+                    5.3: 
+                    ....
+                6. SaveChanges.
+
+            */
+
+            // update season by season Id
+            existAnime.SeasonId = await _seasonService.GetSeasonId(anime.Season);
+            // remove animeid fk
+            await _characterService.removeAnimeFK(animeId);
+
+            var updateCharactes = await _characterService.getCharacterListFromAnime(anime);
+            //update characters + seiyuu
+            rowsAffected += await _characterService.updateCharacter(updateCharactes, animeId);
+
+            /* update animetag*/
+            // remove animetags
+            rowsAffected += await _tagService.removeAnimeTag(animeId);
+            // get updated anime tags
+            var tagList = await _tagService.getTagListFromAnime(anime);
+            //
+            rowsAffected += await _tagService.insertAnimeTag(tagList, animeId);
+
+            // update Anime Name
+            if (!existAnime.AnimeName.Equals(anime.AnimeName))
+            {
+                existAnime.AnimeName = anime.AnimeName;
+            }
+            // update studio id
+            if (existAnime.StudioId != anime.StudioId)
+            {
+                existAnime.StudioId = anime.StudioId;
+            }
+            // update Anime content
+            if (!existAnime.Content.Equals(anime.Content))
+            {
+                existAnime.Content = anime.Content;
+            }
+            // update Anime Thumbnail
+            if (!existAnime.Thumbnail.Equals(anime.Thumbnail))
+            {
+                existAnime.Thumbnail = anime.Thumbnail;
+            }
+            // update Anime status
+            if (!existAnime.Status.Equals(anime.Status))
+            {
+                existAnime.Status = anime.Status;
+            }
+            // update Anime wallpaper
+            if (!existAnime.Wallpaper.Equals(anime.Wallpaper))
+            {
+                existAnime.Wallpaper = anime.Wallpaper;
+            }
+            // update Anime Trailer
+            if (!existAnime.Trailer.Equals(anime.Trailer))
+            {
+                existAnime.Trailer = anime.Trailer;
+            }
+            // update Anime episode duration
+            if (!existAnime.EpisodeDuration.Equals(anime.EpisodeDuration))
+            {
+                existAnime.EpisodeDuration = anime.EpisodeDuration;
+            }
+            // update Anime episode
+            if (!existAnime.Episode.Equals(anime.Episode))
+            {
+                existAnime.Episode = anime.Episode;
+            }
+            // update Anime start day
+            if (!existAnime.StartDay.Equals(anime.StartDay))
+            {
+                existAnime.StartDay = anime.StartDay;
+            }
+            // update Anime Website
+            if (!existAnime.Web.Equals(anime.Web))
+            {
+                existAnime.Web = anime.Web;
+            }
+            // _context.Animes.Update(existAnime);
+            rowsAffected += await _context.SaveChangesAsync();
+
+            return rowsAffected;
         }
 
         //Check if an anime is exited or not
@@ -258,6 +355,22 @@ namespace Angeloid.Services
             if (existedAnime != null) return existedAnime.AnimeId;
 
             return 0;
+        }
+        private async Task<Anime> isExistByAnimeId(int animeId)
+        {
+            var existedAnime = await _context.Animes
+                                .FirstOrDefaultAsync(a => a.AnimeId == animeId);
+            // (
+            //     from ani in _context.Animes
+            //     where ani.AnimeName == anime.AnimeName
+            //     select new Anime
+            //     {
+            //         AnimeId = anime.AnimeId
+            //     }).FirstOrDefaultAsync();
+
+            if (existedAnime != null) return existedAnime;
+
+            return null;
         }
     }
 }
