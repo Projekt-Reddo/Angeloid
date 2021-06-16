@@ -75,6 +75,27 @@ namespace Angeloid.Services
                                 .FirstOrDefaultAsync();
         }
 
+        private async Task<User> GetUserByFacebookId(string facebookId) {
+            return await _context.Users
+                                .Where(u => u.FacebookId == facebookId)
+                                .Select(
+                                    u => new User
+                                    {
+                                        UserId = u.UserId,
+                                        IsAdmin = u.IsAdmin,
+                                        Avatar = u.Avatar
+                                    }
+                                )
+                                .FirstOrDefaultAsync();
+        }
+
+
+        private async Task<bool> IsUserNameExist(User user) {
+            // Find the username from db, if it exists, return true.
+            var existingUsername = await _context.Users.FirstOrDefaultAsync(u => u.UserName == user.UserName);
+            return existingUsername != null && existingUsername.UserId != user.UserId;
+        }
+
         public async Task<bool> IsEmailExist(User user)
         {
             // Find the email from db, if it exists, return true
@@ -141,9 +162,34 @@ namespace Angeloid.Services
             return rs;
         }
 
+        public async Task<int> Register(User user)
+        {
+            var rowInserted = 0;
+            if (await IsUserNameExist(user) || await IsEmailExist(user) )
+            {
+                return 0;
+            }
+            _context.Users.Add(user);
+            rowInserted += await _context.SaveChangesAsync();
+            return rowInserted;
+        }
+
         public Task<User> Login(User user)
         {
             throw new NotImplementedException();
+        }
+
+        public async Task<User> FacebookLogin(User user)
+        {
+            var FacebookUser = await GetUserByFacebookId(user.FacebookId);
+            if (FacebookUser != null)
+            {
+                return FacebookUser;
+            }
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+            FacebookUser = await GetUserByFacebookId(user.FacebookId);
+            return FacebookUser;
         }
 
         public Task<User> Logout(User user)
