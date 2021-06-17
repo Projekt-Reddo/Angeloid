@@ -88,18 +88,12 @@ namespace Angeloid.Controllers
         [Route("{deleteAnimeid:int}")]
         public async Task<ActionResult<Anime>> DeleteAnime([FromServices] Context context, int deleteAnimeid)
         {
-            // Allow Cors
-            Response.Headers.Add("Access-Control-Allow-Origin", "*");
-            var anime = await context.Animes
-                        .Where(a => a.AnimeId == deleteAnimeid)
-                        .FirstOrDefaultAsync();
-            if (anime != null)
+            var rowsAffected = await _animeService.DeleteAnime(deleteAnimeid);
+            if (rowsAffected != 0)
             {
-                context.Animes.Remove(anime);
-                context.SaveChanges();
-                return Ok("Delete success");
+                return Ok(new {message = "Delete Success"});
             }
-            return NotFound();
+            return NotFound(new {message = "Delete Fails"});
         }
 
         //Update anime info
