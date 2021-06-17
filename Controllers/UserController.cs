@@ -51,49 +51,22 @@ namespace Angeloid.Controllers
             if (user != null) { return Ok(user); }
             return NotFound();
         }
-        [HttpPost]
-        [Route("")]
-        public async Task<ActionResult<User>> Register([FromServices] Context context, [FromBody] User user)
-        {
-            if (!ModelState.IsValid) { return BadRequest(ModelState); }
-            // Check existed Username
-            var ExistUser = await context.Users.FirstOrDefaultAsync(u => u.UserName == user.UserName);
-            if (ExistUser != null) { return BadRequest("User name already existed");}
-            var ExistEmail = await context.Users.FirstOrDefaultAsync(u => u.Email == user.Email);
-            if (ExistEmail != null) { return BadRequest("Email already existed");}
-            
-            context.Users.Add(user);
-            await context.SaveChangesAsync();
-            return Ok("Register Done");
-        }
         //Insert new user (register)
         [HttpPost]
-        [Route("facebook")]
-        public async Task<ActionResult<User>> InsertUser([FromServices] Context context, [FromBody] User user)
+        [Route("")]
+        public async Task<ActionResult<User>> Register([FromBody] User user)
         {
-
             if (!ModelState.IsValid) { return BadRequest(ModelState); }
-
-            var FacebookUser = await context.Users.Where(u => u.FacebookId == user.FacebookId && u.FacebookId != null).Select(
-                u => new User {
-                    UserId = u.UserId,
-                    IsAdmin = u.IsAdmin,
-                    Avatar = u.Avatar
-                }
-            ).FirstOrDefaultAsync();
-            if (FacebookUser != null) { return FacebookUser ;}
-
-            context.Users.Add(user);
-            await context.SaveChangesAsync();
-
-            FacebookUser = await context.Users.Where(u => u.FacebookId == user.FacebookId).Select(
-                u => new User {
-                    UserId = u.UserId,
-                    IsAdmin = u.IsAdmin,
-                    Avatar = u.Avatar
-                }
-            ).FirstOrDefaultAsync();
-            return FacebookUser;
+            if (await _userService.Register(user) == 0) { return Conflict(); }
+            int rowInserted = await _userService.Register(user);
+            return Ok(new { message = "Register Done" });
+        }
+        [HttpPost]
+        [Route("facebook")]
+        public async Task<ActionResult<User>> FacebookLogin([FromBody] User user)
+        {
+            if (!ModelState.IsValid) { return BadRequest(ModelState); }
+            return await _userService.FacebookLogin(user);
         }
 
         //Update user profile
