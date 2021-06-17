@@ -31,9 +31,18 @@ namespace Angeloid.Services
             _tagService = tagService;
         }
 
-        public Task<int> DeleteAnime(int animeId)
+        public async Task<int> DeleteAnime(int animeId)
         {
-            throw new System.NotImplementedException();
+            var anime = await _context.Animes
+                        .Where(a => a.AnimeId == animeId)
+                        .FirstOrDefaultAsync();
+            if (anime != null)
+            {
+                _context.Animes.Remove(anime);
+                var rowsAffected = _context.SaveChanges();
+                return rowsAffected;
+            }
+            return 0;
         }
 
         // Get an Anime By Anime Id
