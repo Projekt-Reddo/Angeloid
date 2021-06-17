@@ -156,7 +156,9 @@ namespace Angeloid.Services
             {
                 return 0;
             }
-            
+            if(existingUser.Password == user.NewPassword){
+                return 1;
+            }
             existingUser.Password = user.NewPassword;
             var rs = await _context.SaveChangesAsync();
             return rs;
