@@ -11,5 +11,6 @@ namespace Angeloid.Services
         Task<List<Tag>> ListAllTags();
         Task<int> insertAnimeTag(List<Tag> tagList, int AnimeId);
         Task<List<Tag>> getTagListFromAnime(Anime anime);
+        Task<int> removeAnimeTag(int animeId);
     }
 }
