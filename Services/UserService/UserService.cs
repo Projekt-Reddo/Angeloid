@@ -189,8 +189,15 @@ namespace Angeloid.Services
             return _user;
         }
 
+
         public async Task<User> FacebookLogin(User user)
         {
+            if (await IsEmailExist(user))
+            {
+                var ExistUser = await GetUserEmail(user.Email);
+                ExistUser.FacebookId = user.FacebookId;
+                return ExistUser;
+            }
             var FacebookUser = await GetUserByFacebookId(user.FacebookId);
             if (FacebookUser != null)
             {
@@ -206,5 +213,12 @@ namespace Angeloid.Services
         {
             return null;
         }
+
+        private async Task<User> GetUserEmail(string email) {
+            return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        }
+
+
+
     }
 }
