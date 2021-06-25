@@ -70,6 +70,7 @@ namespace Angeloid
             services.AddScoped<IAnimeService, AnimeService>();
             services.AddScoped<IHomePageService, AnimeService>();
             services.AddScoped<IThreadService, ThreadService>();
+            services.AddScoped<IReviewService, ReviewService>();
 
             //JSON config
             services.AddControllers().AddNewtonsoftJson(options =>
