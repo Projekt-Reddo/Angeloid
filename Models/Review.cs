@@ -6,12 +6,10 @@ namespace Angeloid.Models
     public partial class Review
     {
         //Relationship to User
-        [IgnoreDataMember]
         public int UserId { get; set; }
         public User User { get; set; }
 
         //Relationship to Anime
-        [IgnoreDataMember]
         public int AnimeId { get; set; }
         public Anime Anime { get; set; }
         

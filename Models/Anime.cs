@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
 
 namespace Angeloid.Models
@@ -7,6 +8,7 @@ namespace Angeloid.Models
     public partial class Anime
     {
         public int AnimeId { get; set; }
+        [Required]
         public string AnimeName { get; set; }
         public string Content { get; set; }
         public byte[] Thumbnail { get; set; }
@@ -25,6 +27,7 @@ namespace Angeloid.Models
         // Relationship to Season
         // [IgnoreDataMember]
         public int? SeasonId { get; set; } = null!;
+        [Required]
         public Season Season { get; set; }
 
         // Relationship to Studio
