@@ -110,6 +110,13 @@ namespace Angeloid.Services
             {
                 return 0;
             }
+            if (
+                existingUser.Email == user.Email &&
+                existingUser.Gender == user.Gender &&
+                existingUser.Fullname == user.Fullname
+            ) {
+                return 1;
+            }
 
             existingUser.Email = user.Email;
             existingUser.Gender = user.Gender;
@@ -125,6 +132,10 @@ namespace Angeloid.Services
             {
                 return 0;
             }
+            if (existingUser.Avatar == user.Avatar) {
+                return 1;
+            }
+            
             existingUser.Avatar = user.Avatar;
             return await _context.SaveChangesAsync();
         }
