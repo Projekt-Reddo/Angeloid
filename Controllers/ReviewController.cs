@@ -9,9 +9,6 @@ using Angeloid.Models;
 //Services
 using Angeloid.Services;
 
-//Cache
-using Microsoft.Extensions.Caching.Memory;
-
 namespace Angeloid.Controllers
 {
 
