@@ -11,5 +11,6 @@ namespace Angeloid.Services
         Task<List<Review>> GetReviews(int animeId);
         Task<RatingScoreModel> GetRateScore(int animeId);
         Task<IsClickedModel> IsClicked(IsClickedModel isClickedModel);
+        Task<int> AddReviewAndRating(Review review);
     }
 }

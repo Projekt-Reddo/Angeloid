@@ -9,9 +9,6 @@ using Angeloid.Models;
 //Services
 using Angeloid.Services;
 
-//Cache
-using Microsoft.Extensions.Caching.Memory;
-
 namespace Angeloid.Controllers
 {
 
@@ -55,6 +52,11 @@ namespace Angeloid.Controllers
         [HttpPost]
         [Route("check")]
         public async Task<ActionResult<IsClickedModel>> isClicked([FromBody] IsClickedModel isClickedModel) {
+            if (isClickedModel.AnimeId == 0 || isClickedModel.UserId == 0)
+            {
+                return BadRequest();
+            }
+            
             if (!ModelState.IsValid) {
                 return NotFound();
             }
@@ -63,6 +65,28 @@ namespace Angeloid.Controllers
 
             if (rs == null) {
                 return NotFound();
+            }
+
+            return rs;
+        }
+
+        [HttpPost]
+        [Route("rate")]
+        public async Task<ActionResult<int>> AddRateScore([FromBody] Review review) {
+            if (review.AnimeId == 0 || review.UserId == 0)
+            {
+                return BadRequest();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return NotFound();
+            }
+
+            var rs = await _reviewService.AddReviewAndRating(review);
+
+            if (rs == 0) {
+                return NoContent();
             }
 
             return rs;
