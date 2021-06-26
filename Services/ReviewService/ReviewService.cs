@@ -115,9 +115,36 @@ namespace Angeloid.Services
             //Set status to return model
             isClickedModel.Rated = (isReview != null && isReview.RateScore != 0) ? true : false;
             isClickedModel.Favorite = (isFavorite != null) ? true : false;
-            isClickedModel.Reviewed = (isReview.Content != null) ? true : false;
+            isClickedModel.Reviewed = (isReview != null && isReview.Content != null) ? true : false;
 
             return isClickedModel;
+        }
+
+        public async Task<int> AddReviewAndRating(Review review) {
+            
+            Review existedReview = await _context.Reviews.Where(re => re.AnimeId == review.AnimeId && re.UserId == review.UserId).FirstOrDefaultAsync();
+
+            int rowsAffected = 0;
+
+            if (existedReview == null) {
+                _context.Reviews.Add(review);
+                rowsAffected += await _context.SaveChangesAsync();
+                return rowsAffected;
+            }
+
+            if (review.RateScore >= 1 && review.RateScore <= 5) {
+                existedReview.RateScore = review.RateScore;
+                rowsAffected += await _context.SaveChangesAsync();
+                return rowsAffected;
+            }
+
+            if (review.Content != null && review.Content != "") {
+                existedReview.Content = review.Content;
+                rowsAffected += await _context.SaveChangesAsync();
+                return rowsAffected;
+            }
+
+            return 0;
         }
     }
 }
