@@ -26,6 +26,7 @@ namespace Angeloid.Controllers
         [HttpGet]
         [Route("{animeId:int}")]
         public async Task<ActionResult<List<Review>>> GetAnimeReviews(int animeId) {
+            //Get review list from Service
             var reviews = await _reviewService.GetReviews(animeId);
             
             if (reviews == null) {
@@ -39,6 +40,7 @@ namespace Angeloid.Controllers
         [Route("rate/{animeId:int}")]
         public async Task<ActionResult<RatingScoreModel>> GetRateScore(int animeId)
         {
+            //Get rateScores from Service
             var rateScores = await _reviewService.GetRateScore(animeId);
 
             if (rateScores == null)
@@ -51,6 +53,7 @@ namespace Angeloid.Controllers
 
         [HttpPost]
         [Route("check")]
+        //Check if User reviewed, favorite, rate
         public async Task<ActionResult<IsClickedModel>> isClicked([FromBody] IsClickedModel isClickedModel) {
             if (isClickedModel.AnimeId == 0 || isClickedModel.UserId == 0)
             {
@@ -71,7 +74,8 @@ namespace Angeloid.Controllers
         }
 
         [HttpPost]
-        [Route("rate")]
+        [Route("")]
+        //Add rateScore and review
         public async Task<ActionResult<int>> AddRateScore([FromBody] Review review) {
             if (review.AnimeId == 0 || review.UserId == 0)
             {

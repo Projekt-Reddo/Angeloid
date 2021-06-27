@@ -72,7 +72,8 @@ namespace Angeloid.Services
                                             AnimeId = animeId,
                                             UserId = re.UserId,
                                             User = new User {
-                                                Avatar = re.User.Avatar
+                                                Avatar = re.User.Avatar,
+                                                Fullname = re.User.Fullname
                                             },
                                             Content = re.Content,
                                         }).ToListAsync();
@@ -121,23 +122,29 @@ namespace Angeloid.Services
         }
 
         public async Task<int> AddReviewAndRating(Review review) {
-            
+            //Check if Review is existed with animeId and UserId
             Review existedReview = await _context.Reviews.Where(re => re.AnimeId == review.AnimeId && re.UserId == review.UserId).FirstOrDefaultAsync();
 
             int rowsAffected = 0;
 
+            //If NOT add new Review 
             if (existedReview == null) {
                 _context.Reviews.Add(review);
                 rowsAffected += await _context.SaveChangesAsync();
                 return rowsAffected;
             }
 
-            if (review.RateScore >= 1 && review.RateScore <= 5) {
-                existedReview.RateScore = review.RateScore;
-                rowsAffected += await _context.SaveChangesAsync();
-                return rowsAffected;
+            //If EXISTED change score 
+            if (existedReview.RateScore <1 || existedReview.RateScore > 5) {
+                if (review.RateScore >= 1 && review.RateScore <= 5)
+                {
+                    existedReview.RateScore = review.RateScore;
+                    rowsAffected += await _context.SaveChangesAsync();
+                    return rowsAffected;
+                }
             }
 
+            //If EXISTED change content
             if (review.Content != null && review.Content != "") {
                 existedReview.Content = review.Content;
                 rowsAffected += await _context.SaveChangesAsync();

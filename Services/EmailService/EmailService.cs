@@ -34,7 +34,7 @@ namespace Angeloid.Services
 
                 await SmtpServer.SendMailAsync(mail);
             } catch (Exception e) {
-                System.Console.WriteLine(e);
+                throw new Exception($"{e} Email sent failed");
             }
         }
     }
