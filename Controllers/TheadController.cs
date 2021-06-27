@@ -46,6 +46,28 @@ namespace Angeloid.Controllers
 
             return Ok(threads);
         }
+
+        [HttpGet]
+        [Route("")]
+        public async Task<ActionResult<List<Thread>>> ListAllThread()
+        {
+            var threads = await _threadService.ListAllThread();
+
+            if (threads == null) { return NotFound(); }
+
+            return threads;
+        }
+
+        [HttpDelete]
+        [Route("{threadId:int}")]
+        public async Task<ActionResult<List<Thread>>> DeleteThread(int threadId)
+        {
+            var rowDeleted = await _threadService.DeleteThreadById(threadId);
+
+            if (rowDeleted == 0) { return NotFound(); }
+
+            return Ok();
+        }
         [HttpPost]
         [Route("")]
         public async Task<ActionResult<Thread>> AddnewThread([FromBody] Thread thread)      
