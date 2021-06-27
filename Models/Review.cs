@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
 
 namespace Angeloid.Models
@@ -6,12 +7,12 @@ namespace Angeloid.Models
     public partial class Review
     {
         //Relationship to User
-        [IgnoreDataMember]
+        [Required]
         public int UserId { get; set; }
         public User User { get; set; }
 
         //Relationship to Anime
-        [IgnoreDataMember]
+        [Required]
         public int AnimeId { get; set; }
         public Anime Anime { get; set; }
         

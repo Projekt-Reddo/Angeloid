@@ -121,6 +121,12 @@ namespace Angeloid.Services
         {
             var rowInserted = 0;
 
+            var existedAnime = await isExistByAnimeName(inputAnime);
+
+            if (existedAnime != 0) {
+                throw new Exception("Anime is already existed!");
+            }
+
             //Get characters from inputAnime and set inputAnime Characters to null
             var inputCharacters = await _characterService.getCharacterListFromAnime(inputAnime);
             inputAnime.Characters = null;
@@ -142,10 +148,15 @@ namespace Angeloid.Services
             var insertedAnimeId = await isExistByAnimeName(inputAnime);
 
             // insert characters and seiyuu info
-            rowInserted += await _characterService.insertListCharacter(inputCharacters, insertedAnimeId);
+            if (inputCharacters != null) {
+                rowInserted += await _characterService.insertListCharacter(inputCharacters, insertedAnimeId);
+            }
 
             // insert tagId and animeId to maptable AnimeTag
-            rowInserted += await _tagService.insertAnimeTag(inputTags, insertedAnimeId);
+            if (inputTags != null)
+            {
+                rowInserted += await _tagService.insertAnimeTag(inputTags, insertedAnimeId);
+            }
 
             return rowInserted;
         }
@@ -354,18 +365,17 @@ namespace Angeloid.Services
         //If exist return it's id else return 0;
         public async Task<int> isExistByAnimeName(Anime anime)
         {
-            var existedAnime = await (from ani in _context.Animes
-                                      where ani.AnimeName == anime.AnimeName
-                                      select new Anime
+            var existedAnime = await _context.Animes.Where(ani => ani.AnimeName == anime.AnimeName)
+                                      .Select(ani => new Anime
                                       {
-                                          AnimeId = anime.AnimeId
+                                          AnimeId = ani.AnimeId
                                       }).FirstOrDefaultAsync();
 
             if (existedAnime != null) return existedAnime.AnimeId;
 
             return 0;
         }
-        private async Task<Anime> isExistByAnimeId(int animeId)
+        public async Task<Anime> isExistByAnimeId(int animeId)
         {
             var existedAnime = await _context.Animes
                                 .FirstOrDefaultAsync(a => a.AnimeId == animeId);
