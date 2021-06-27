@@ -7,6 +7,6 @@ namespace Angeloid.Services
 {
     public interface ISearchService
     {
-        Task<List<Anime>> Search(Anime anime);
+        Task<List<Anime>> Search(Search search);
     }
 }

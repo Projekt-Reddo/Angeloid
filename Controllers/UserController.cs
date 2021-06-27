@@ -164,11 +164,11 @@ namespace Angeloid.Controllers
             int userId = _tokenService.getUserIdByToken(user.Token);
             
             if (await _userService.ResetUserPassword(user, userId) == 0) {
+                _tokenService.removeToken(userId);
                 return Ok("Update password successfully");
             }
 
-            _tokenService.removeToken(userId);
-            
+            _tokenService.removeToken(userId); 
             return NotFound("Cannot reset Password");
         }
     }

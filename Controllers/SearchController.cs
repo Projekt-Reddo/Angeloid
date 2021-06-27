@@ -20,7 +20,7 @@ using Microsoft.Extensions.Caching.Memory;
 namespace Angeloid.Controllers
 {
     [ApiController]
-    [Route("api/anime")]
+    [Route("api/search")]
     public class SearchController : ControllerBase
     {
         private readonly ISearchService _searchService;
@@ -30,12 +30,10 @@ namespace Angeloid.Controllers
             _searchService = searchService;
         }
 
-        [HttpGet]
-        [Route("search")]
-        public async Task<ActionResult<List<Anime>>> SearchAnime(Anime anime)
+        [HttpPost]
+        public async Task<ActionResult<List<Anime>>> SearchAnime(Search search)
         {
-            ICollection<Anime> searchedAnime = await _searchService.Search(anime);
-
+            ICollection<Anime> searchedAnime = await _searchService.Search(search);
             return Ok(searchedAnime);
         }
     }
