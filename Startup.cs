@@ -72,6 +72,7 @@ namespace Angeloid
             services.AddScoped<IThreadService, ThreadService>();
             services.AddScoped<IReviewService, ReviewService>();
             services.AddScoped<ISearchService, SearchService>();
+            services.AddScoped<IFavoriteService, FavoriteService>();
 
             //JSON config
             services.AddControllers().AddNewtonsoftJson(options =>
