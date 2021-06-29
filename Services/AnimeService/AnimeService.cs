@@ -379,13 +379,6 @@ namespace Angeloid.Services
         {
             var existedAnime = await _context.Animes
                                 .FirstOrDefaultAsync(a => a.AnimeId == animeId);
-            // (
-            //     from ani in _context.Animes
-            //     where ani.AnimeName == anime.AnimeName
-            //     select new Anime
-            //     {
-            //         AnimeId = anime.AnimeId
-            //     }).FirstOrDefaultAsync();
 
             if (existedAnime != null) return existedAnime;
 
