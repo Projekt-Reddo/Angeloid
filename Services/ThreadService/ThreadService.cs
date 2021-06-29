@@ -83,9 +83,16 @@ namespace Angeloid.Services
             return threads;
         }
 
+
+
         public async Task<int> AddNewThread(Thread thread)
         {
             var rowInserted = 0;
+            var existingUsername = await _context.Users.FirstOrDefaultAsync(u => u.UserId == thread.UserId);
+            if (existingUsername == null)
+            {
+                return 0;
+            }
             _context.Threads.Add(thread);
             rowInserted += await _context.SaveChangesAsync();
             return rowInserted;

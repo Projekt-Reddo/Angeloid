@@ -39,6 +39,15 @@ namespace Angeloid.Services
             return users;
         }
 
+        public async Task<List<User>> ListTopUser(){
+            var users = await(
+                from u in _context.Users
+                orderby u.Threads.Count() descending
+                select u
+            ).Take(9).ToListAsync();
+            return users;
+        }
+
         public async Task<User> GetUserById(int userId)
         {
             var user = await _context.Users
@@ -111,6 +120,13 @@ namespace Angeloid.Services
             {
                 return 0;
             }
+            if (
+                existingUser.Email == user.Email &&
+                existingUser.Gender == user.Gender &&
+                existingUser.Fullname == user.Fullname
+            ) {
+                return 1;
+            }
 
             existingUser.Email = user.Email;
             existingUser.Gender = user.Gender;
@@ -126,6 +142,10 @@ namespace Angeloid.Services
             {
                 return 0;
             }
+            if (existingUser.Avatar == user.Avatar) {
+                return 1;
+            }
+            
             existingUser.Avatar = user.Avatar;
             return await _context.SaveChangesAsync();
         }
@@ -157,7 +177,9 @@ namespace Angeloid.Services
             {
                 return 0;
             }
-            
+            if(existingUser.Password == user.NewPassword){
+                return 1;
+            }
             existingUser.Password = user.NewPassword;
             var rs = await _context.SaveChangesAsync();
             return rs;
@@ -190,8 +212,15 @@ namespace Angeloid.Services
             return _user;
         }
 
+
         public async Task<User> FacebookLogin(User user)
         {
+            if (await IsEmailExist(user))
+            {
+                var ExistUser = await GetUserEmail(user.Email);
+                ExistUser.FacebookId = user.FacebookId;
+                return ExistUser;
+            }
             var FacebookUser = await GetUserByFacebookId(user.FacebookId);
             if (FacebookUser != null)
             {
@@ -207,5 +236,12 @@ namespace Angeloid.Services
         {
             return null;
         }
+
+        private async Task<User> GetUserEmail(string email) {
+            return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        }
+
+
+
     }
 }

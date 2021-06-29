@@ -68,7 +68,6 @@ namespace Angeloid.Controllers
 
             return Ok();
         }
-
         [HttpPost]
         [Route("")]
         public async Task<ActionResult<Thread>> AddnewThread([FromBody] Thread thread)

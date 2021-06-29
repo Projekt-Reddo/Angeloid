@@ -15,5 +15,6 @@ namespace Angeloid.Services
         Task<int> UpdateAnime(Anime anime, int animeId);
         Task<int> isExistByAnimeName(Anime anime);
         Task<List<Anime>> GetAnimesByCharacterName(CharacterName listCharacterName);
+        Task<Anime> isExistByAnimeId(int animeId);
     }
 }

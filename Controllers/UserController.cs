@@ -41,6 +41,16 @@ namespace Angeloid.Controllers
             if (users != null) { return users; }
             return NotFound();
         }
+        // List Top User for admin dashboard
+        [HttpGet]
+        [Route("topuser")]
+        public async Task<ActionResult<List<User>>> ListTopUser()
+        {
+            var users = await _userService.ListTopUser();
+
+            if (users != null) { return users; }
+            return NotFound();
+        }
 
         [HttpGet]
         [Route("{userId:int}")]
@@ -76,11 +86,13 @@ namespace Angeloid.Controllers
         {
             if (!ModelState.IsValid) { return BadRequest(ModelState); }
 
-            if (await _userService.IsEmailExist(user)) {
+            if (await _userService.IsEmailExist(user))
+            {
                 throw new Exception("Email Exist");
             }
 
-            if (await _userService.UpdateUserInfo(user, userId) != 0) {
+            if (await _userService.UpdateUserInfo(user, userId) != 0)
+            {
                 return Ok();
             }
 
@@ -94,7 +106,8 @@ namespace Angeloid.Controllers
         {
             if (!ModelState.IsValid) { return BadRequest(ModelState); }
 
-            if (await _userService.UpdateUserAvatar(user, userId) != 0) {
+            if (await _userService.UpdateUserAvatar(user, userId) != 0)
+            {
                 return Ok();
             }
 
@@ -108,7 +121,8 @@ namespace Angeloid.Controllers
         {
             if (!ModelState.IsValid) { return BadRequest(ModelState); }
 
-            if (await _userService.DeleteUserById(deleteUserid) != 0) {
+            if (await _userService.DeleteUserById(deleteUserid) != 0)
+            {
                 return Ok();
             }
 
@@ -122,7 +136,8 @@ namespace Angeloid.Controllers
         {
             if (!ModelState.IsValid) { return BadRequest(ModelState); }
 
-            if (await _userService.UpdateUserPassword(user, userId) != 0) {
+            if (await _userService.UpdateUserPassword(user, userId) != 0)
+            {
                 return Ok();
             }
             throw new Exception("Wrong Password!");
@@ -134,10 +149,11 @@ namespace Angeloid.Controllers
         {
             var existingUser = await _userService.GetUserByEmail(user.Email);
             //Check whether user Email exist or not
-            if (existingUser == null) {
+            if (existingUser == null)
+            {
                 return NotFound();
             }
-           
+
             //Create token & send email link
             string guid = _tokenService.createToken(existingUser.UserId);
             await _emailService.SendEmailAsync(existingUser.Email, guid);
@@ -148,7 +164,8 @@ namespace Angeloid.Controllers
         [Route("token")]
         public IActionResult VerifyToken([FromBody] Token token)
         {
-            if (_tokenService.getUserIdByToken(token.TokenName) != 0) {
+            if (_tokenService.getUserIdByToken(token.TokenName) != 0)
+            {
                 return Ok();
             }
             return NotFound();
@@ -162,14 +179,15 @@ namespace Angeloid.Controllers
             if (!ModelState.IsValid) { return BadRequest(ModelState); }
 
             int userId = _tokenService.getUserIdByToken(user.Token);
-            
-            if (await _userService.ResetUserPassword(user, userId) != 0) {
-                return Ok();
+
+            if (await _userService.ResetUserPassword(user, userId) == 0)
+            {
+                _tokenService.removeToken(userId);
+                return Ok("Update password successfully");
             }
 
             _tokenService.removeToken(userId);
-            
-            return NotFound();
+            return NotFound("Cannot reset Password");
         }
     }
 }
