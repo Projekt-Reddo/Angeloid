@@ -9,6 +9,7 @@ namespace Angeloid.Services
     public interface IUserService
     {
         Task<List<User>> ListAllUser();
+        Task<List<User>> ListTopUser();
         Task<User> GetUserById(int userId);
         Task<User> GetUserByEmail(string email);
         Task<bool> IsEmailExist(User user);
