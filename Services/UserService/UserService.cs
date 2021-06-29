@@ -24,6 +24,7 @@ namespace Angeloid.Services
         {
             var users = await (
                 from user in _context.Users
+                where user.IsAdmin == false
                 select new User
                 {
                     UserId = user.UserId,
