@@ -48,51 +48,50 @@ namespace Angeloid.Services
         // Get an Anime By Anime Id
         public async Task<Anime> GetAnime(int animeId)
         {
-            var anime = await _context.Animes
-                                    .Where(anime => anime.AnimeId == animeId)
-                                    .Select(
-                                        anime => new Anime
-                                        {
-                                            AnimeId = anime.AnimeId,
-                                            AnimeName = anime.AnimeName,
-                                            Content = anime.Content,
-                                            Thumbnail = anime.Thumbnail,
-                                            Status = anime.Status,
-                                            Wallpaper = anime.Wallpaper,
-                                            Trailer = anime.Trailer,
-                                            View = anime.View,
-                                            EpisodeDuration = anime.EpisodeDuration,
-                                            Episode = anime.Episode,
-                                            StartDay = anime.StartDay,
-                                            Web = anime.Web,
-                                            Characters = (from character in anime.Characters
-                                                          select new Character
-                                                          {
-                                                              CharacterId = character.CharacterId,
-                                                              CharacterName = character.CharacterName,
-                                                              CharacterRole = character.CharacterRole,
-                                                              CharacterImage = character.CharacterImage,
-                                                              Seiyuu = character.Seiyuu
-                                                          }
-                                            ).ToList(),
-                                            Season = anime.Season,
-                                            SeasonId = anime.SeasonId,
-                                            StudioId = anime.StudioId,
-                                            Studio = anime.Studio,
-                                            Tags = anime.Tags,
-                                        }
+            var gotAnime = await _context.Animes
+                                .Where(anime => anime.AnimeId == animeId)
+                                .Select(anime => new Anime
+                                {
+                                    AnimeId = anime.AnimeId,
+                                    AnimeName = anime.AnimeName,
+                                    Content = anime.Content,
+                                    Thumbnail = anime.Thumbnail,
+                                    Status = anime.Status,
+                                    Wallpaper = anime.Wallpaper,
+                                    Trailer = anime.Trailer,
+                                    View = anime.View,
+                                    EpisodeDuration = anime.EpisodeDuration,
+                                    Episode = anime.Episode,
+                                    StartDay = anime.StartDay,
+                                    Web = anime.Web,
+                                    Characters = (from character in anime.Characters
+                                                  select new Character
+                                                  {
+                                                      CharacterId = character.CharacterId,
+                                                      CharacterName = character.CharacterName,
+                                                      CharacterRole = character.CharacterRole,
+                                                      CharacterImage = character.CharacterImage,
+                                                      Seiyuu = character.Seiyuu
+                                                  }
+                                             ).ToList(),
+                                    Season = anime.Season,
+                                    SeasonId = anime.SeasonId,
+                                    StudioId = anime.StudioId,
+                                    Studio = anime.Studio,
+                                    Tags = anime.Tags,
+                                }
                                     ).FirstOrDefaultAsync();
-            return anime;
+            return gotAnime;
         }
 
         // Get List Anime by Characters Name was detected by AI
         public async Task<List<Anime>> GetAnimesByCharacterName(CharacterName listCharacterName)
         {
             HashSet<string> animeSet = new HashSet<string>();
-            
+
             foreach (string characterName in listCharacterName.listCharacterName)
             {
-                var anime = await _context.Characters.
+                var character = await _context.Characters.
                             Where(c => c.CharacterName == characterName)
                             .Select(
                                 c => new Character
@@ -101,11 +100,23 @@ namespace Angeloid.Services
                                     {
                                         AnimeId = c.Anime.AnimeId,
                                         AnimeName = c.Anime.AnimeName,
-                                        Thumbnail = c.Anime.Thumbnail
+                                        Thumbnail = c.Anime.Thumbnail,
+                                        Episode = c.Anime.Episode,
+                                        Studio = c.Anime.Studio,
+                                        Tags = (from tag in c.Anime.Tags
+                                                orderby tag.TagId ascending
+                                                select new Tag
+                                                {
+                                                    TagId = tag.TagId,
+                                                    TagName = tag.TagName
+                                                }).Take(3).ToList()
                                     }
                                 }
                             ).FirstOrDefaultAsync();
-                animeSet.Add(JsonConvert.SerializeObject(anime.Anime));
+                if (character != null)
+                {
+                    animeSet.Add(JsonConvert.SerializeObject(character.Anime));
+                }
             }
 
             List<Anime> animeList = new List<Anime>();
@@ -280,7 +291,6 @@ namespace Angeloid.Services
                     5.3: 
                     ....
                 6. SaveChanges.
-
             */
 
             // update season by season Id

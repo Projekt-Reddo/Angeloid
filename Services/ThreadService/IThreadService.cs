@@ -12,5 +12,6 @@ namespace Angeloid.Services
         Task<List<Thread>> ListAllThread();
         Task<int> DeleteThreadById(int threadId);
         Task<int> AddNewThread(Thread thread);
+        Task<List<Thread>> SearchThread(SearchThread searchString);
     }
 }

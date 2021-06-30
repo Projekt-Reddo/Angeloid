@@ -70,11 +70,20 @@ namespace Angeloid.Controllers
         }
         [HttpPost]
         [Route("")]
-        public async Task<ActionResult<Thread>> AddnewThread([FromBody] Thread thread)      
+        public async Task<ActionResult<Thread>> AddnewThread([FromBody] Thread thread)
         {
             if (!ModelState.IsValid) { return BadRequest(ModelState); }
             await _threadService.AddNewThread(thread);
             return Ok(new { message = "Add Thread Done" });
-        } 
+        }
+
+        [HttpPost]
+        [Route("searchThread")]
+        public async Task<ActionResult<List<Thread>>> SearchThread([FromBody] SearchThread searchString)
+        {
+            var threads = await _threadService.SearchThread(searchString);
+
+            return threads;
+        }
     }
 }

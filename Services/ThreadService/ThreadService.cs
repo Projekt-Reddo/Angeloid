@@ -105,5 +105,23 @@ namespace Angeloid.Services
             return rowInserted;
         }
 
+        public async Task<List<Thread>> SearchThread(SearchThread searchString)
+        {
+            var threads = await _context.Threads
+                            .Where(t => t.Title.ToLower().Contains(searchString.searchString.ToLower()))
+                            .OrderByDescending(t => t.ThreadId)
+                            .Select(t => new Thread
+                            {
+                                ThreadId = t.ThreadId,
+                                Title = t.Title,
+                                Content = t.Content,
+                                Image = t.Image,
+                                UserId = t.UserId,
+                                User = t.User
+                            })
+                            .ToListAsync();
+            return threads;
+        }
+
     }
 }
