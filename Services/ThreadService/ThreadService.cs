@@ -20,7 +20,8 @@ namespace Angeloid.Services
         {
             var thread = await _context.Threads.FirstOrDefaultAsync(t => t.ThreadId == threadId);
 
-            if (thread == null) {
+            if (thread == null)
+            {
                 return 0;
             }
 
@@ -49,7 +50,8 @@ namespace Angeloid.Services
         public async Task<List<Thread>> ListAllThread()
         {
             var threads = await _context.Threads
-                            .Select(t => new Thread {
+                            .Select(t => new Thread
+                            {
                                 ThreadId = t.ThreadId,
                                 Title = t.Title,
                                 Content = t.Content,
@@ -58,7 +60,7 @@ namespace Angeloid.Services
                                 User = t.User
                             })
                             .ToListAsync();
-            
+
             return threads;
         }
 
@@ -73,11 +75,11 @@ namespace Angeloid.Services
 
         public async Task<List<Thread>> LoadMore(int loadId)
         {
-             var threads = await _context.Threads
-                            .Where(t=>t.ThreadId>=loadId-10 && t.ThreadId<loadId)
-                            .Include(t=>t.User)
-                            .OrderByDescending(t=>t.ThreadId)
-                            .ToListAsync();
+            var threads = await _context.Threads
+                           .Where(t => t.ThreadId >= loadId - 10 && t.ThreadId < loadId)
+                           .Include(t => t.User)
+                           .OrderByDescending(t => t.ThreadId)
+                           .ToListAsync();
             return threads;
         }
 
@@ -94,6 +96,24 @@ namespace Angeloid.Services
             _context.Threads.Add(thread);
             rowInserted += await _context.SaveChangesAsync();
             return rowInserted;
+        }
+
+        public async Task<List<Thread>> SearchThread(SearchThread searchString)
+        {
+            var threads = await _context.Threads
+                            .Where(t => t.Title.ToLower().Contains(searchString.searchString.ToLower()))
+                            .OrderByDescending(t => t.ThreadId)
+                            .Select(t => new Thread
+                            {
+                                ThreadId = t.ThreadId,
+                                Title = t.Title,
+                                Content = t.Content,
+                                Image = t.Image,
+                                UserId = t.UserId,
+                                User = t.User
+                            })
+                            .ToListAsync();
+            return threads;
         }
 
     }
