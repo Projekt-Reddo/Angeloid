@@ -20,7 +20,8 @@ namespace Angeloid.Services
         {
             var thread = await _context.Threads.FirstOrDefaultAsync(t => t.ThreadId == threadId);
 
-            if (thread == null) {
+            if (thread == null)
+            {
                 return 0;
             }
 
@@ -49,7 +50,8 @@ namespace Angeloid.Services
         public async Task<List<Thread>> ListAllThread()
         {
             var threads = await _context.Threads
-                            .Select(t => new Thread {
+                            .Select(t => new Thread
+                            {
                                 ThreadId = t.ThreadId,
                                 Title = t.Title,
                                 Content = t.Content,
@@ -58,10 +60,9 @@ namespace Angeloid.Services
                                 User = t.User
                             })
                             .ToListAsync();
-            
+
             return threads;
         }
-
         public async Task<List<Thread>> ListThreadFirst()
         {
             var threads = await _context.Threads
@@ -70,19 +71,27 @@ namespace Angeloid.Services
                                             .ToListAsync();
             return threads;
         }
-
         public async Task<List<Thread>> LoadMore(int loadId)
         {
-             var threads = await _context.Threads
-                            .Where(t=>t.ThreadId>=loadId-10 && t.ThreadId<loadId)
-                            .Include(t=>t.User)
-                            .OrderByDescending(t=>t.ThreadId)
-                            .ToListAsync();
+            var threads = await(
+                from t in _context.Threads
+                where t.ThreadId < loadId
+                orderby t.ThreadId descending
+                select new Thread{
+                    ThreadId = t.ThreadId,
+                    Title = t.Title,
+                    Content = t.Content,
+                    Image = t.Image,
+                    UserId = t.UserId,
+                    User = new User{
+                        UserId = t.UserId,
+                        UserName = t.User.UserName,
+                        Avatar = t.User.Avatar
+                    }
+                }
+            ).Take(10).ToListAsync();
             return threads;
         }
-
-
-
         public async Task<int> AddNewThread(Thread thread)
         {
             var rowInserted = 0;
