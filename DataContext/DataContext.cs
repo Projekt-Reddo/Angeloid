@@ -102,6 +102,12 @@ namespace Angeloid.DataContext
                                 j.HasKey(r => new { r.AnimeId, r.UserId });
                             }
                         );
+            
+            //Unique for a column
+            modelBuilder.Entity<User>().HasIndex(u => u.UserName).IsUnique();
+            modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();
+            modelBuilder.Entity<Anime>().HasIndex(a => a.AnimeName).IsUnique();
+
 
             //User and Thread : many to one
             modelBuilder.Entity<User>()
