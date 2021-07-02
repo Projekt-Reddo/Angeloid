@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using System.IO;
 
 //Context
 using Angeloid.DataContext;
@@ -15,6 +16,7 @@ namespace Angeloid.Services
     public class UserService : IUserService, ILogInOutService
     {
         private Context _context;
+        private const string fileName = "UserLogin.txt";
         public UserService(Context context)
         {
             _context = context;
@@ -39,8 +41,9 @@ namespace Angeloid.Services
             return users;
         }
 
-        public async Task<List<User>> ListTopUser(){
-            var users = await(
+        public async Task<List<User>> ListTopUser()
+        {
+            var users = await (
                 from u in _context.Users
                 orderby u.Threads.Count() descending
                 select u
@@ -68,11 +71,13 @@ namespace Angeloid.Services
             return user;
         }
 
-        private async Task<User> GetUser(int userId) {
+        private async Task<User> GetUser(int userId)
+        {
             return await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
         }
 
-        public async Task<User> GetUserByEmail(string email) {
+        public async Task<User> GetUserByEmail(string email)
+        {
             return await _context.Users
                                 .Where(u => u.Email == email)
                                 .Select(
@@ -85,7 +90,8 @@ namespace Angeloid.Services
                                 .FirstOrDefaultAsync();
         }
 
-        private async Task<User> GetUserByFacebookId(string facebookId) {
+        private async Task<User> GetUserByFacebookId(string facebookId)
+        {
             return await _context.Users
                                 .Where(u => u.FacebookId == facebookId)
                                 .Select(
@@ -99,8 +105,8 @@ namespace Angeloid.Services
                                 .FirstOrDefaultAsync();
         }
 
-
-        private async Task<bool> IsUserNameExist(User user) {
+        private async Task<bool> IsUserNameExist(User user)
+        {
             // Find the username from db, if it exists, return true.
             var existingUsername = await _context.Users.FirstOrDefaultAsync(u => u.UserName == user.UserName);
             return existingUsername != null && existingUsername.UserId != user.UserId;
@@ -124,7 +130,8 @@ namespace Angeloid.Services
                 existingUser.Email == user.Email &&
                 existingUser.Gender == user.Gender &&
                 existingUser.Fullname == user.Fullname
-            ) {
+            )
+            {
                 return 1;
             }
 
@@ -142,15 +149,17 @@ namespace Angeloid.Services
             {
                 return 0;
             }
-            if (existingUser.Avatar == user.Avatar) {
+            if (existingUser.Avatar == user.Avatar)
+            {
                 return 1;
             }
-            
+
             existingUser.Avatar = user.Avatar;
             return await _context.SaveChangesAsync();
         }
 
-        public async Task<int> DeleteUserById(int userId) {
+        public async Task<int> DeleteUserById(int userId)
+        {
             var existingUser = await GetUser(userId);
             if (existingUser == null)
             {
@@ -160,7 +169,8 @@ namespace Angeloid.Services
             return await _context.SaveChangesAsync();
         }
 
-        public async Task<int> UpdateUserPassword(UserPassword user, int userId) {
+        public async Task<int> UpdateUserPassword(UserPassword user, int userId)
+        {
             var existingUser = await GetUser(userId);
 
             if (existingUser == null || existingUser.Password != user.OldPassword)
@@ -171,13 +181,15 @@ namespace Angeloid.Services
             return await _context.SaveChangesAsync();
         }
 
-        public async Task<int> ResetUserPassword(UserPassword user, int userId) {
+        public async Task<int> ResetUserPassword(UserPassword user, int userId)
+        {
             var existingUser = await GetUser(userId);
             if (existingUser == null)
             {
                 return 0;
             }
-            if(existingUser.Password == user.NewPassword){
+            if (existingUser.Password == user.NewPassword)
+            {
                 return 1;
             }
             existingUser.Password = user.NewPassword;
@@ -188,7 +200,7 @@ namespace Angeloid.Services
         public async Task<int> Register(User user)
         {
             var rowInserted = 0;
-            if (await IsUserNameExist(user) || await IsEmailExist(user) )
+            if (await IsUserNameExist(user) || await IsEmailExist(user))
             {
                 return 0;
             }
@@ -209,9 +221,9 @@ namespace Angeloid.Services
                                 IsAdmin = u.IsAdmin
                             }
                         ).FirstOrDefaultAsync();
+            AddLoginToFile();
             return _user;
         }
-
 
         public async Task<User> FacebookLogin(User user)
         {
@@ -219,16 +231,19 @@ namespace Angeloid.Services
             {
                 var ExistUser = await GetUserEmail(user.Email);
                 ExistUser.FacebookId = user.FacebookId;
+                AddLoginToFile();
                 return ExistUser;
             }
             var FacebookUser = await GetUserByFacebookId(user.FacebookId);
             if (FacebookUser != null)
             {
+                AddLoginToFile();
                 return FacebookUser;
             }
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
             FacebookUser = await GetUserByFacebookId(user.FacebookId);
+            AddLoginToFile();
             return FacebookUser;
         }
 
@@ -237,11 +252,50 @@ namespace Angeloid.Services
             return null;
         }
 
-        private async Task<User> GetUserEmail(string email) {
+        private async Task<User> GetUserEmail(string email)
+        {
             return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
         }
 
+        // Count and Add time to file when any user login to web
+        private void AddLoginToFile()
+        {
+            DateTime current = DateTime.Now;
+            string[] lines = File.ReadAllLines(fileName);
+            for (int i = 0; i < lines.Length; i++)
+            {
+                if (lines[i] == current.Year.ToString())
+                {
+                    for (int j = 1; j < 13; j++)
+                    {
+                        if (j == current.Month)
+                        {
+                            lines[i + j] = (int.Parse(lines[i + j]) + 1).ToString();
+                        }
+                    }
+                    break;
+                }
+            }
+            File.WriteAllLines(fileName, lines);
+        }
 
-
+        // List all Login Time Of User in current year
+        public List<string> ReadLoginFromFile()
+        {
+            DateTime current = DateTime.Now;
+            string[] lines = File.ReadAllLines(fileName);
+            List<string> listView = new List<string>();
+            for (int i = 0; i < lines.Length; i++)
+            {
+                if (lines[i] == current.Year.ToString())
+                {
+                    for (int j = 1; j < 13; j++)
+                    {
+                        listView.Add(lines[i + j]);
+                    }
+                }
+            }
+            return listView;
+        }
     }
 }

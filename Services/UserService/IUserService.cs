@@ -20,5 +20,6 @@ namespace Angeloid.Services
         Task<int> ResetUserPassword(UserPassword user, int userId);
         Task<User> FacebookLogin(User user);
         Task<int> Register(User user);
+        List<string>  ReadLoginFromFile();
     }
 }
