@@ -189,5 +189,15 @@ namespace Angeloid.Controllers
             _tokenService.removeToken(userId);
             return NotFound("Cannot reset Password");
         }
+
+        // Route ro List all Login Time in Current Year
+        [HttpGet]
+        [Route("LoginTime")]
+        public ActionResult<List<string>> ListAllLogin()
+        {
+            var allLogin = _userService.ReadLoginFromFile();
+
+            return allLogin;
+        }
     }
 }
