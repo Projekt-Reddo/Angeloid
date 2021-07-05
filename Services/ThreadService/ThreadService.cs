@@ -65,16 +65,18 @@ namespace Angeloid.Services
         }
         public async Task<List<Thread>> ListThreadFirst()
         {
-            var threads = await(
+            var threads = await (
                 from t in _context.Threads
                 orderby t.ThreadId descending
-                select new Thread{
+                select new Thread
+                {
                     ThreadId = t.ThreadId,
                     Title = t.Title,
                     Content = t.Content,
                     Image = t.Image,
                     UserId = t.UserId,
-                    User = new User{
+                    User = new User
+                    {
                         UserId = t.UserId,
                         UserName = t.User.UserName,
                         Avatar = t.User.Avatar
@@ -85,17 +87,19 @@ namespace Angeloid.Services
         }
         public async Task<List<Thread>> LoadMore(int loadId)
         {
-            var threads = await(
+            var threads = await (
                 from t in _context.Threads
                 where t.ThreadId < loadId
                 orderby t.ThreadId descending
-                select new Thread{
+                select new Thread
+                {
                     ThreadId = t.ThreadId,
                     Title = t.Title,
                     Content = t.Content,
                     Image = t.Image,
                     UserId = t.UserId,
-                    User = new User{
+                    User = new User
+                    {
                         UserId = t.UserId,
                         UserName = t.User.UserName,
                         Avatar = t.User.Avatar
@@ -117,6 +121,7 @@ namespace Angeloid.Services
             return rowInserted;
         }
 
+        // List all searched thread with text key
         public async Task<List<Thread>> SearchThread(SearchThread searchString)
         {
             var threads = await _context.Threads
@@ -129,7 +134,12 @@ namespace Angeloid.Services
                                 Content = t.Content,
                                 Image = t.Image,
                                 UserId = t.UserId,
-                                User = t.User
+                                User = new User
+                                {
+                                    UserId = t.UserId,
+                                    UserName = t.User.UserName,
+                                    Avatar = t.User.Avatar
+                                }
                             })
                             .ToListAsync();
             return threads;
