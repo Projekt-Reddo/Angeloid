@@ -139,17 +139,28 @@ namespace Angeloid.Services
             }
 
             //Get characters from inputAnime and set inputAnime Characters to null
-            var inputCharacters = await _characterService.getCharacterListFromAnime(inputAnime);
-            inputAnime.Characters = null;
+            //Except null input
+            List<Character> inputCharacters = null;
+            if (inputAnime.Characters != null) {
+                inputCharacters = await _characterService.getCharacterListFromAnime(inputAnime);
+                inputAnime.Characters = null;
+            }
 
             //Get tags from input anime and set inputAnim Tags to null
-            var inputTags = await _tagService.getTagListFromAnime(inputAnime);
-            inputAnime.Tags = null;
+            //Except null input
+            List<Tag> inputTags = null;
+            if (inputAnime.Tags != null) {
+                inputTags = await _tagService.getTagListFromAnime(inputAnime);
+                inputAnime.Tags = null;
+            }
 
             //Get inputSeason id and insert to FK anime.SeasonId
-            var inputSeason = inputAnime.Season;
-            inputAnime.Season = null;
-            inputAnime.SeasonId = await _seasonService.GetSeasonId(inputSeason);
+            Season inputSeason = null;
+            if (inputAnime.Season != null) {
+                inputSeason = inputAnime.Season;
+                inputAnime.Season = null;
+                inputAnime.SeasonId = await _seasonService.GetSeasonId(inputSeason);
+            }
 
             //Add anime to db
             _context.Animes.Add(inputAnime);
@@ -160,13 +171,13 @@ namespace Angeloid.Services
 
             // insert characters and seiyuu info
             if (inputCharacters != null) {
-                rowInserted += await _characterService.insertListCharacter(inputCharacters, insertedAnimeId);
+                await _characterService.insertListCharacter(inputCharacters, insertedAnimeId);
             }
 
             // insert tagId and animeId to maptable AnimeTag
             if (inputTags != null)
             {
-                rowInserted += await _tagService.insertAnimeTag(inputTags, insertedAnimeId);
+                await _tagService.insertAnimeTag(inputTags, insertedAnimeId);
             }
 
             return rowInserted;
