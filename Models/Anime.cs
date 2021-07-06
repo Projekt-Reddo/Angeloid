@@ -32,6 +32,7 @@ namespace Angeloid.Models
 
         // Relationship to Studio
         // [IgnoreDataMember]
+        [Required]
         public int? StudioId { get; set; } = null!;
         public Studio Studio { get; set; }
 
