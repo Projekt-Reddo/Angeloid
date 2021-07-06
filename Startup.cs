@@ -56,7 +56,7 @@ namespace Angeloid
             string frontEndUrl = Configuration["FrontEndUrl"];
             services.AddScoped<IEmailService>(sp => new EmailService(emailConfig, frontEndUrl));
 
-            //Add Token Service Singleton
+            //Add Service Singleton
             services.AddSingleton<ITokenService, TokenService>();
             
             //Add Services to Scope
@@ -73,6 +73,7 @@ namespace Angeloid
             services.AddScoped<IReviewService, ReviewService>();
             services.AddScoped<ISearchService, SearchService>();
             services.AddScoped<IFavoriteService, FavoriteService>();
+            services.AddScoped<IAutoAnimeService, AutoAnimeService>();
 
             //JSON config
             services.AddControllers().AddNewtonsoftJson(options =>
