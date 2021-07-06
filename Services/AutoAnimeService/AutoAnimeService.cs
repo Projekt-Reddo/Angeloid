@@ -204,12 +204,15 @@ namespace Angeloid.Services
                     }
                 }
 
-                // Check seiyuu exist
-                Seiyuu seiyuuFromDb = await this._context.Seiyuus.FirstOrDefaultAsync(s => s.SeiyuuName == seiyuu.SeiyuuName);
-                if (seiyuuFromDb == null) {
-                    await this._context.Seiyuus.AddAsync(seiyuu);
-                    await this._context.SaveChangesAsync();
-                    seiyuuFromDb = seiyuu;
+                Seiyuu seiyuuFromDb = new Seiyuu();
+                if (seiyuu.SeiyuuName != null) {
+                    // Check seiyuu exist
+                    seiyuuFromDb = await this._context.Seiyuus.FirstOrDefaultAsync(s => s.SeiyuuName == seiyuu.SeiyuuName);
+                    if (seiyuuFromDb == null) {
+                        await this._context.Seiyuus.AddAsync(seiyuu);
+                        await this._context.SaveChangesAsync();
+                        seiyuuFromDb = seiyuu;
+                    }
                 }
 
                 // Check character exist
@@ -220,7 +223,11 @@ namespace Angeloid.Services
                     character.CharacterName = characterName;
                     character.CharacterRole = characterJson["role"].ToString();
                     character.CharacterImage = await fetchImage(characterJson["image_url"].ToString());
-                    character.SeiyuuId = seiyuuFromDb.SeiyuuId;
+                    if (seiyuuFromDb.SeiyuuName == null) {
+                        character.SeiyuuId = 1;
+                    } else {
+                        character.SeiyuuId = seiyuuFromDb.SeiyuuId;
+                    }
                     character.AnimeId = animeId;
                     await this._context.Characters.AddAsync(character);
                     await this._context.SaveChangesAsync();
