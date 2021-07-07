@@ -22,6 +22,7 @@ namespace Angeloid.Services
             _context = context;
         }
 
+        // List all non-admin users in the database
         public async Task<List<User>> ListAllUser()
         {
             var users = await (
@@ -158,6 +159,7 @@ namespace Angeloid.Services
             return await _context.SaveChangesAsync();
         }
 
+        // Delete an user by id
         public async Task<int> DeleteUserById(int userId)
         {
             var existingUser = await GetUser(userId);
