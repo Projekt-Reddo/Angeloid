@@ -33,6 +33,7 @@ namespace Angeloid.Services
 
         public async Task<int> DeleteAnime(int animeId)
         {
+            // remove anime and all relevens in db
             var anime = await _context.Animes
                         .Where(a => a.AnimeId == animeId)
                         .FirstOrDefaultAsync();

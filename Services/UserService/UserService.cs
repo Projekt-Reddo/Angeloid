@@ -213,6 +213,9 @@ namespace Angeloid.Services
 
         public async Task<User> Login(User user)
         {
+            // check if username and password is matching
+            // return user's data if success
+            // retun null is not success
             var _user = await _context.Users
                         .Where(u => u.UserName == user.UserName && u.Password == user.Password)
                         .Select(
@@ -251,6 +254,7 @@ namespace Angeloid.Services
 
         public Task<User> Logout(User user)
         {
+            // what do you expect me to do? :)
             return null;
         }
 
