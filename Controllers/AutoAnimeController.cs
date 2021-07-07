@@ -23,7 +23,6 @@ namespace Angeloid.Controllers
     [Route("api/auto")]
     public class AutoAnimeController : ControllerBase
     {
-        //Declare for a Cache 
         private readonly IAutoAnimeService _autoAnimeService;
         public AutoAnimeController(IAutoAnimeService autoAnimeService)
         {
@@ -33,6 +32,7 @@ namespace Angeloid.Controllers
         [HttpGet]
         [Route("process")]
         public async Task<IActionResult> CheckProcessing() {
+            // Check proccessing state of auto anime
             bool isProcessing = AutoAnimeProcessing.getIsProcessing();
             return Ok(isProcessing);
         }
@@ -43,7 +43,7 @@ namespace Angeloid.Controllers
             AutoAnimeProcessing.setProcessing();
             await _autoAnimeService.AutoAddAnime();
             AutoAnimeProcessing.setDone();
-            return Ok();
+            return Ok("Done!");
         }
     }
 }

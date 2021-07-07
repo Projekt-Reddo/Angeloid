@@ -134,6 +134,7 @@ namespace Angeloid.Services
                     return;
                 }
 
+                // Add tag list to Db
                 JArray tagList = Newtonsoft.Json.JsonConvert.DeserializeObject<JArray>(json["genres"].ToString());
                 if (tagList.Count != 0) {
                     foreach (JObject tag in tagList) {
@@ -153,6 +154,7 @@ namespace Angeloid.Services
 
         private async Task handleAddAnimeTagToDb(string tagIdStr, int animeId) {
             try {
+                // AnimeTag Information
                 int tagId = Int32.Parse(tagIdStr);
                 AnimeTag animeTag = new AnimeTag();
                 animeTag.AnimeId = animeId;
@@ -175,12 +177,15 @@ namespace Angeloid.Services
                     return;
                 }
 
+                // Get characters list
                 JArray characterList = Newtonsoft.Json.JsonConvert.DeserializeObject<JArray>(json["characters"].ToString());
-
+                
+                // If characters list is empty, return
                 if (characterList.Count == 0) {
                     return;
                 }
 
+                // Add character to Db
                 foreach (JObject character in characterList) {
                     await handleAddCharacterToDb(character, animeId);
                 }
@@ -192,6 +197,7 @@ namespace Angeloid.Services
 
         private async Task handleAddCharacterToDb(JObject characterJson, int animeId) {
             try {
+                // Seiyuu information
                 Seiyuu seiyuu = new Seiyuu();
                 JArray seiyuuList = Newtonsoft.Json.JsonConvert.DeserializeObject<JArray>(characterJson["voice_actors"].ToString());
                 if (seiyuuList.Count != 0) {
@@ -217,8 +223,8 @@ namespace Angeloid.Services
 
                 // Check character exist
                 string characterName = characterJson["name"].ToString().Replace(",", "");
-                Character characterFromDb = await this._context.Characters.FirstOrDefaultAsync(c => c.CharacterName == characterName);
-                if (characterFromDb == null) {
+                // Character characterFromDb = await this._context.Characters.FirstOrDefaultAsync(c => c.CharacterName == characterName);
+                // if (characterFromDb == null) {
                     Character character = new Character();
                     character.CharacterName = characterName;
                     character.CharacterRole = characterJson["role"].ToString();
@@ -231,7 +237,7 @@ namespace Angeloid.Services
                     character.AnimeId = animeId;
                     await this._context.Characters.AddAsync(character);
                     await this._context.SaveChangesAsync();
-                }
+                // }
             } catch (Exception ex) {
                 System.Console.WriteLine(ex);
                 return;
