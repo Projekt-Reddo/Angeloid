@@ -48,6 +48,7 @@ namespace Angeloid.Services
         // Get an Anime By Anime Id
         public async Task<Anime> GetAnime(int animeId)
         {
+            // Query get an Anime By Anime Id
             var gotAnime = await _context.Animes
                                 .Where(anime => anime.AnimeId == animeId)
                                 .Select(anime => new Anime
@@ -89,10 +90,11 @@ namespace Angeloid.Services
         {
             HashSet<string> animeSet = new HashSet<string>();
 
+            // Find anime in list characters
             foreach (string characterName in listCharacterName.listCharacterName)
             {
                 var character = await _context.Characters.
-                            Where(c => c.CharacterName == characterName)
+                            Where(c => c.CharacterName.ToLower().Contains(characterName.ToLower()))
                             .Select(
                                 c => new Character
                                 {
@@ -134,14 +136,16 @@ namespace Angeloid.Services
 
             var existedAnime = await isExistByAnimeName(inputAnime);
 
-            if (existedAnime != 0) {
+            if (existedAnime != 0)
+            {
                 throw new Exception("Anime is already existed!");
             }
 
             //Get characters from inputAnime and set inputAnime Characters to null
             //Except null input
             List<Character> inputCharacters = null;
-            if (inputAnime.Characters != null) {
+            if (inputAnime.Characters != null)
+            {
                 inputCharacters = await _characterService.getCharacterListFromAnime(inputAnime);
                 inputAnime.Characters = null;
             }
@@ -149,14 +153,16 @@ namespace Angeloid.Services
             //Get tags from input anime and set inputAnim Tags to null
             //Except null input
             List<Tag> inputTags = null;
-            if (inputAnime.Tags != null) {
+            if (inputAnime.Tags != null)
+            {
                 inputTags = await _tagService.getTagListFromAnime(inputAnime);
                 inputAnime.Tags = null;
             }
 
             //Get inputSeason id and insert to FK anime.SeasonId
             Season inputSeason = null;
-            if (inputAnime.Season != null) {
+            if (inputAnime.Season != null)
+            {
                 inputSeason = inputAnime.Season;
                 inputAnime.Season = null;
                 inputAnime.SeasonId = await _seasonService.GetSeasonId(inputSeason);
@@ -170,7 +176,8 @@ namespace Angeloid.Services
             var insertedAnimeId = await isExistByAnimeName(inputAnime);
 
             // insert characters and seiyuu info
-            if (inputCharacters != null) {
+            if (inputCharacters != null)
+            {
                 await _characterService.insertListCharacter(inputCharacters, insertedAnimeId);
             }
 
