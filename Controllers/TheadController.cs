@@ -29,6 +29,7 @@ namespace Angeloid.Controllers
         [Route("startup")]
         public async Task<ActionResult<List<Thread>>> ListThreadsFirst()
         {
+            // this will load first when user press thread page
             var threads = await _threadService.ListThreadFirst();
 
             if (threads == null) { return NotFound(); }
@@ -40,6 +41,7 @@ namespace Angeloid.Controllers
         [Route("load/{loadId:int}")]
         public async Task<ActionResult<List<Thread>>> LoadMore(int loadId)
         {
+            // Load more thread depends on last threadId (loadId)
             var threads = await _threadService.LoadMore(loadId);
 
             if (threads == null) { return NotFound(); }
