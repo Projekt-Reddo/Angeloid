@@ -88,6 +88,7 @@ namespace Angeloid.Controllers
         [Route("{deleteAnimeid:int}")]
         public async Task<ActionResult<Anime>> DeleteAnime([FromServices] Context context, int deleteAnimeid)
         {
+            // Delete Anime by animeId
             var rowsAffected = await _animeService.DeleteAnime(deleteAnimeid);
             if (rowsAffected != 0)
             {
@@ -101,6 +102,12 @@ namespace Angeloid.Controllers
         [Route("{updateAnimeId:int}")]
         public async Task<ActionResult<int>> UpdateAnime([FromServices] Context context, [FromBody] Anime updateAnime, int updateAnimeId)
         {
+            // Update Anime info:
+            /*
+                -Thumbnail, Background.
+                -Anime Info.
+                -Characters and Seiyuus.
+            */
             var rowsAffected = await _animeService.UpdateAnime(updateAnime, updateAnimeId);
             if (rowsAffected != 0)
             {

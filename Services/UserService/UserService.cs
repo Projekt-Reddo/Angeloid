@@ -123,11 +123,15 @@ namespace Angeloid.Services
 
         public async Task<int> UpdateUserInfo(User user, int userId)
         {
+            // Check user exist
             var existingUser = await GetUser(userId);
+            // If not exist, return failed
             if (existingUser == null)
             {
                 return 0;
             }
+
+            // If there is no change, return succeed
             if (
                 existingUser.Email == user.Email &&
                 existingUser.Gender == user.Gender &&
@@ -137,6 +141,7 @@ namespace Angeloid.Services
                 return 1;
             }
 
+            // Update
             existingUser.Email = user.Email;
             existingUser.Gender = user.Gender;
             existingUser.Fullname = user.Fullname;
@@ -146,16 +151,21 @@ namespace Angeloid.Services
 
         public async Task<int> UpdateUserAvatar(User user, int userId)
         {
+            // Check user exist
             var existingUser = await GetUser(userId);
+            // If not exist, return failed
             if (existingUser == null)
             {
                 return 0;
             }
+
+            // If there is no change, return succeed
             if (existingUser.Avatar == user.Avatar)
             {
                 return 1;
             }
 
+            // Update
             existingUser.Avatar = user.Avatar;
             return await _context.SaveChangesAsync();
         }
@@ -175,27 +185,38 @@ namespace Angeloid.Services
 
         public async Task<int> UpdateUserPassword(UserPassword user, int userId)
         {
+            // Check user exist
             var existingUser = await GetUser(userId);
 
+            // If cannot find user or wrong old password
             if (existingUser == null || existingUser.Password != user.OldPassword)
             {
                 return 0;
             }
+
+            // Update
             existingUser.Password = user.NewPassword;
             return await _context.SaveChangesAsync();
         }
 
         public async Task<int> ResetUserPassword(UserPassword user, int userId)
         {
+            // Check user exist
             var existingUser = await GetUser(userId);
+
+            // If not exist, return failed
             if (existingUser == null)
             {
                 return 0;
             }
+
+            // If new password is similar to old password, return done
             if (existingUser.Password == user.NewPassword)
             {
                 return 1;
             }
+
+            // Update
             existingUser.Password = user.NewPassword;
             var rs = await _context.SaveChangesAsync();
             return rs;
@@ -215,6 +236,9 @@ namespace Angeloid.Services
 
         public async Task<User> Login(User user)
         {
+            // check if username and password is matching
+            // return user's data if success
+            // retun null is not success
             var _user = await _context.Users
                         .Where(u => u.UserName == user.UserName && u.Password == user.Password)
                         .Select(
@@ -253,6 +277,7 @@ namespace Angeloid.Services
 
         public Task<User> Logout(User user)
         {
+            // what do you expect me to do? :)
             return null;
         }
 

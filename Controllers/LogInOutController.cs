@@ -34,7 +34,7 @@ namespace Angeloid.Controllers
             Response.Headers.Add("Access-Control-Allow-Origin", "*");
             // Check if model valid
             if (!ModelState.IsValid) { return BadRequest(ModelState); }
-
+            // get user from service
             var _user = await _userService.Login(user);
 
             if (_user != null)
@@ -49,6 +49,7 @@ namespace Angeloid.Controllers
         [Route("{userid:int}")]
         public async Task<ActionResult<User>> Logout([FromServices] Context context, int userId)
         {
+            // This will be handle by the front end :v
             return Ok("Logout success");
         }
     }

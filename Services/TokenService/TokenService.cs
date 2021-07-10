@@ -23,6 +23,7 @@ namespace Angeloid.Services
 
             Token newToken = new Token(newGuid, expireTime);
 
+            // If userId exist, remove it
             if (this._tokenList.ContainsKey(userId))
             {
                 this._tokenList.Remove(userId);
@@ -53,8 +54,10 @@ namespace Angeloid.Services
 
         private void removeExpired()
         {
+            //Traverse through the Dictionaries
             foreach (KeyValuePair<int, Token> entry in this._tokenList)
             {
+                // If expire time < now remove the token
                 if (DateTime.Compare(entry.Value.Exp, DateTime.Now) < 0)
                 {
                     this._tokenList.Remove(entry.Key);

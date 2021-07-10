@@ -65,6 +65,7 @@ namespace Angeloid.Services
         }
         public async Task<List<Thread>> ListThreadFirst()
         {
+            // load 10 thread latest from database first
             var threads = await (
                 from t in _context.Threads
                 orderby t.ThreadId descending
@@ -87,6 +88,7 @@ namespace Angeloid.Services
         }
         public async Task<List<Thread>> LoadMore(int loadId)
         {
+            // load 10 more thread that id is smaller than loadId
             var threads = await (
                 from t in _context.Threads
                 where t.ThreadId < loadId
