@@ -50,7 +50,7 @@ namespace Angeloid.Controllers
         public async Task<ActionResult<Anime>> GetAnime(int getAnimeId)
         {
             var anime = await _animeService.GetAnime(getAnimeId);
-
+            var viewRs = await _animeService.IncreaseView(anime, anime.AnimeId);
             if (anime == null) { return NotFound(); }
 
             return anime;
@@ -91,9 +91,9 @@ namespace Angeloid.Controllers
             var rowsAffected = await _animeService.DeleteAnime(deleteAnimeid);
             if (rowsAffected != 0)
             {
-                return Ok(new {message = "Delete Success"});
+                return Ok(new { message = "Delete Success" });
             }
-            return NotFound(new {message = "Delete Fails"});
+            return NotFound(new { message = "Delete Fails" });
         }
 
         //Update anime info
@@ -102,9 +102,10 @@ namespace Angeloid.Controllers
         public async Task<ActionResult<int>> UpdateAnime([FromServices] Context context, [FromBody] Anime updateAnime, int updateAnimeId)
         {
             var rowsAffected = await _animeService.UpdateAnime(updateAnime, updateAnimeId);
-            if (rowsAffected!=0){
+            if (rowsAffected != 0)
+            {
                 return Ok("Update success");
-            }    
+            }
             return NotFound();
         }
     }

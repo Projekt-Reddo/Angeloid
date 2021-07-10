@@ -48,8 +48,8 @@ namespace Angeloid.Services
         // Get an Anime By Anime Id
         public async Task<Anime> GetAnime(int animeId)
         {
-            // Query get an Anime By Anime Id
-            var gotAnime = await _context.Animes
+            // Query get an the information of the anime By Anime Id
+            var anime = await _context.Animes
                                 .Where(anime => anime.AnimeId == animeId)
                                 .Select(anime => new Anime
                                 {
@@ -82,17 +82,27 @@ namespace Angeloid.Services
                                     Tags = anime.Tags,
                                 }
                                     ).FirstOrDefaultAsync();
-            return gotAnime;
+            return anime;
+        }
+
+        //Increase view of the anime by id
+        public async Task<int> IncreaseView(Anime anime, int animeId)
+        {
+            var existAnime = await isExistByAnimeId(animeId);
+            existAnime.View = anime.View + 1;
+            return await _context.SaveChangesAsync();
         }
 
         // Get List Anime by Characters Name was detected by AI
         public async Task<List<Anime>> GetAnimesByCharacterName(CharacterName listCharacterName)
         {
             HashSet<string> animeSet = new HashSet<string>();
+            List<Anime> animeList = new List<Anime>();
 
-            // Find anime in list characters
+            // Find anime in list characters' name
             foreach (string characterName in listCharacterName.listCharacterName)
             {
+                // Get the anime with character name
                 var character = await _context.Characters.
                             Where(c => c.CharacterName.ToLower().Contains(characterName.ToLower()))
                             .Select(
@@ -115,13 +125,14 @@ namespace Angeloid.Services
                                     }
                                 }
                             ).FirstOrDefaultAsync();
+                //If character is exist add to animeSet
                 if (character != null)
                 {
                     animeSet.Add(JsonConvert.SerializeObject(character.Anime));
                 }
             }
 
-            List<Anime> animeList = new List<Anime>();
+            // Add anime in anime set to anime list
             foreach (string anime in animeSet)
             {
                 animeList.Add(JsonConvert.DeserializeObject<Anime>(anime));

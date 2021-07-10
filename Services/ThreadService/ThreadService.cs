@@ -124,6 +124,7 @@ namespace Angeloid.Services
         // List all searched thread with text key
         public async Task<List<Thread>> SearchThread(SearchThread searchString)
         {
+            // Query get all thread contain text key in database
             var threads = await _context.Threads
                             .Where(t => t.Title.ToLower().Contains(searchString.searchString.ToLower()))
                             .OrderByDescending(t => t.ThreadId)

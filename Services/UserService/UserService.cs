@@ -25,6 +25,7 @@ namespace Angeloid.Services
         // List all non-admin users in the database
         public async Task<List<User>> ListAllUser()
         {
+            // Query to get all non-admin users in the database
             var users = await (
                 from user in _context.Users
                 where user.IsAdmin == false
@@ -162,6 +163,7 @@ namespace Angeloid.Services
         // Delete an user by id
         public async Task<int> DeleteUserById(int userId)
         {
+            // Query delete an user by user's Id
             var existingUser = await GetUser(userId);
             if (existingUser == null)
             {
@@ -263,21 +265,27 @@ namespace Angeloid.Services
         private void AddLoginToFile()
         {
             DateTime current = DateTime.Now;
+
+            // Read all line in file
             string[] lines = File.ReadAllLines(fileName);
+
+            // Find current month and year to add time user was login
             for (int i = 0; i < lines.Length; i++)
             {
-                if (lines[i] == current.Year.ToString())
+                if (lines[i] == current.Year.ToString()) // Compare year
                 {
                     for (int j = 1; j < 13; j++)
                     {
-                        if (j == current.Month)
+                        if (j == current.Month) // Compare month
                         {
-                            lines[i + j] = (int.Parse(lines[i + j]) + 1).ToString();
+                            lines[i + j] = (int.Parse(lines[i + j]) + 1).ToString(); // Add time user logged in
                         }
                     }
                     break;
                 }
             }
+
+            // Write change to file
             File.WriteAllLines(fileName, lines);
         }
 
@@ -285,8 +293,12 @@ namespace Angeloid.Services
         public List<string> ReadLoginFromFile()
         {
             DateTime current = DateTime.Now;
-            string[] lines = File.ReadAllLines(fileName);
             List<string> listView = new List<string>();
+
+            // Read all line in file
+            string[] lines = File.ReadAllLines(fileName);
+
+            // Add views of current year to listView
             for (int i = 0; i < lines.Length; i++)
             {
                 if (lines[i] == current.Year.ToString())
