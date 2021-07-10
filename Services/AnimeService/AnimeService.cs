@@ -356,20 +356,16 @@ namespace Angeloid.Services
                 existAnime.Content = anime.Content;
             }
             // update Anime Thumbnail
-            if (!existAnime.Thumbnail.Equals(anime.Thumbnail))
-            {
-                existAnime.Thumbnail = anime.Thumbnail;
-            }
+            existAnime.Thumbnail = anime.Thumbnail;
+
             // update Anime status
             if (!existAnime.Status.Equals(anime.Status))
             {
                 existAnime.Status = anime.Status;
             }
             // update Anime wallpaper
-            if (!existAnime.Wallpaper.Equals(anime.Wallpaper))
-            {
-                existAnime.Wallpaper = anime.Wallpaper;
-            }
+            existAnime.Wallpaper = anime.Wallpaper;
+
             // update Anime Trailer
             if (!existAnime.Trailer.Equals(anime.Trailer))
             {
