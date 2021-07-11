@@ -28,6 +28,7 @@ using Angeloid.Services;
 
 //Models
 using Angeloid.Models;
+using System.Text;
 
 namespace Angeloid
 {
@@ -58,7 +59,7 @@ namespace Angeloid
 
             //Add Service Singleton
             services.AddSingleton<ITokenService, TokenService>();
-            
+
             //Add Services to Scope
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<ILogInOutService, UserService>();
@@ -122,10 +123,24 @@ namespace Angeloid
 
             app.UseHttpsRedirection();
 
+            //Get front-end url from appsettings.json
+            var frontEndUrl = Configuration["FrontEndUrl"];
+
+            //Restrict to only front-end url
+            app.Use(async (context, next) =>
+            {
+                if (context.Request.Headers["Referer"].ToString() != frontEndUrl+"/")
+                {
+                    byte[] data = Encoding.ASCII.GetBytes("Not Recognized Request");
+                    await context.Response.Body.WriteAsync(data);
+                    return;
+                }
+                await next();
+            });
+
             app.UseRouting();
 
             //CORS config for Front-end url
-            var frontEndUrl = Configuration["FrontEndUrl"];
             app.UseCors(options => options.WithOrigins(frontEndUrl)
                                         .AllowAnyMethod()
                                         .AllowAnyHeader()
