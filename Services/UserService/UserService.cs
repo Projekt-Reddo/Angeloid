@@ -224,6 +224,9 @@ namespace Angeloid.Services
 
         public async Task<int> Register(User user)
         {
+            // Check the username are already registered
+            // Check the Email are already registered
+            // return 0 row inserted if register failed
             var rowInserted = 0;
             if (await IsUserNameExist(user) || await IsEmailExist(user))
             {
@@ -255,6 +258,11 @@ namespace Angeloid.Services
 
         public async Task<User> FacebookLogin(User user)
         {
+            if(user.FacebookId == null)
+            {
+                return null;
+            }
+            // If Email is existed then Login and save the FacebookId to the account
             if (await IsEmailExist(user))
             {
                 var ExistUser = await GetUserEmail(user.Email);
@@ -262,12 +270,18 @@ namespace Angeloid.Services
                 AddLoginToFile();
                 return ExistUser;
             }
+
+            // If Facebook user already exists in the database then login
+
             var FacebookUser = await GetUserByFacebookId(user.FacebookId);
             if (FacebookUser != null)
             {
                 AddLoginToFile();
                 return FacebookUser;
             }
+
+            // None of the statements are true then create an account using Facebook information
+
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
             FacebookUser = await GetUserByFacebookId(user.FacebookId);
