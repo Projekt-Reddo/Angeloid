@@ -17,6 +17,8 @@ namespace Angeloid.Services
     {
         private Context _context;
         private const string fileName = "UserLogin.txt";
+        private const string fileContent = 
+        "2021\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n2022\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n2023\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n2024\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n2025\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n2026\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n2027\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n2028\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n2029\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n2030\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n2031\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n2032\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n2033\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n2034\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n2035\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n";
         public UserService(Context context)
         {
             _context = context;
@@ -258,7 +260,7 @@ namespace Angeloid.Services
 
         public async Task<User> FacebookLogin(User user)
         {
-            if(user.FacebookId == null)
+            if (user.FacebookId == null)
             {
                 return null;
             }
@@ -304,6 +306,13 @@ namespace Angeloid.Services
         private void AddLoginToFile()
         {
             DateTime current = DateTime.Now;
+
+            if (!File.Exists(fileName))
+            {
+                StreamWriter sw = new StreamWriter(fileName);
+                sw.Write(fileContent);
+                sw.Close();
+            }
 
             // Read all line in file
             string[] lines = File.ReadAllLines(fileName);
