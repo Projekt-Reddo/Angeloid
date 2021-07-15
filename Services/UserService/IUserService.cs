@@ -21,5 +21,6 @@ namespace Angeloid.Services
         Task<User> FacebookLogin(User user);
         Task<int> Register(User user);
         List<string>  ReadLoginFromFile();
+        Task<bool> CheckFbUser(int userId);
     }
 }

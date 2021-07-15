@@ -359,5 +359,16 @@ namespace Angeloid.Services
             }
             return listView;
         }
+
+        public async Task<bool> CheckFbUser(int userId) {
+            var user = await this._context.Users
+                            .FirstOrDefaultAsync(u => u.UserId == userId);
+
+            if (user.UserName == null || user.UserName == "") {
+                return false;
+            }
+
+            return true;
+        } 
     }
 }
