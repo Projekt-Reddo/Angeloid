@@ -143,6 +143,18 @@ namespace Angeloid.Controllers
             throw new Exception("Wrong Password!");
         }
 
+        //Update user password
+        [HttpGet]
+        [Route("password/check/{userId:int}")]
+        public async Task<ActionResult<User>> CheckFb(int userId)
+        {
+            if (await _userService.CheckFbUser(userId))
+            {
+                return Ok(true);
+            }
+            return Ok(false);
+        }
+
         [HttpPost]
         [Route("forgot")]
         public async Task<ActionResult<User>> ForgotPassword([FromBody] User user)
