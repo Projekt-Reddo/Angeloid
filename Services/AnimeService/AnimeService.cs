@@ -104,7 +104,7 @@ namespace Angeloid.Services
             foreach (string characterName in listCharacterName.listCharacterName)
             {
                 // Get the anime with character name
-                var character = await _context.Characters.
+                var characters = await _context.Characters.
                             Where(c => c.CharacterName.ToLower().Contains(characterName.ToLower()))
                             .Select(
                                 c => new Character
@@ -125,11 +125,14 @@ namespace Angeloid.Services
                                                 }).Take(3).ToList()
                                     }
                                 }
-                            ).FirstOrDefaultAsync();
-                //If character is exist add to animeSet
-                if (character != null)
+                            ).ToListAsync();
+                //If characters isn't null add to animeSet
+                if (characters != null)
                 {
-                    animeSet.Add(JsonConvert.SerializeObject(character.Anime));
+                    foreach (Character character in characters)
+                    {
+                        animeSet.Add(JsonConvert.SerializeObject(character.Anime));
+                    }
                 }
             }
 
