@@ -11,6 +11,7 @@ namespace Angeloid.Models
         [Required]
         public string AnimeName { get; set; }
         public string Content { get; set; }
+        [Required]
         public byte[] Thumbnail { get; set; }
         public string Status { get; set; }
         public byte[] Wallpaper { get; set; }
